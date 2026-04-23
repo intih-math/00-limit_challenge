@@ -20,7 +20,9 @@ body {
 
 /* images */
 .side-img {
-  object-fit: cover;
+  width: 240px;
+  height: auto;
+  object-fit: contain;
 }
 
 /* boutons */
