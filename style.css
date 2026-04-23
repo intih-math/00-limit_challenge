@@ -1,0 +1,21 @@
+body {
+  font-family: Arial;
+  text-align: center;
+}
+
+#game {
+  display: grid;
+  justify-content: center;
+  margin: 20px;
+}
+
+button {
+  width: 40px;
+  height: 40px;
+  font-size: 14px;
+}
+
+#leaderboard {
+  list-style: none;
+  padding: 0;
+}
