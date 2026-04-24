@@ -1,33 +1,7 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <title>0² limit</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-
-<h1>🧠 🧠 🧠</h1>
-
-<div class="container">
-
-<img src="challenge.png" id="img-left" class="side-img">  
-
-<div id="game"></div>
-
-<img src="chimere-chess-piece.png" id="img-right" class="side-img">  
-</div>
-  
 <div id="controls">
   <input type="text" id="name" placeholder="Pseudo">
   <button onclick="submit()">Envoyer score</button>
+
+  <!-- 🔥 bouton aide -->
+  <button onclick="toggleHelp()" id="helpBtn">Aide: OFF</button>
 </div>
-
-<h2>🏆 Classement</h2>
-<ul id="leaderboard"></ul>
-
-<script type="module" src="firebase.js"></script>
-<script src="game.js"></script>
-
-</body>
-</html>

@@ -2,8 +2,9 @@ const N = 10;
 let data = [];
 let current = 1;
 let currentPos = null;
+let helpMode = false;
 
-// déplacements (copiés depuis Python)
+// déplacements (comme Python)
 const moves = [
   [3, 0], [2, 2], [0, 3], [-2, 2],
   [-3, 0], [-2, -2], [0, -3], [2, -2]
@@ -26,10 +27,11 @@ for (let i = 0; i < N; i++) {
   }
 }
 
-// vérifie déplacement valide
+// =====================
+// VALIDATION MOUVEMENT
+// =====================
 function isValidMove(i, j) {
   if (data[i][j] !== 0) return false;
-
   if (current === 1) return true;
 
   for (let m of moves) {
@@ -44,7 +46,9 @@ function isValidMove(i, j) {
   return false;
 }
 
-// clic utilisateur
+// =====================
+// CLICK
+// =====================
 function click(i, j) {
   if (!isValidMove(i, j)) return;
 
@@ -58,14 +62,35 @@ function click(i, j) {
 
   current++;
 
-  highlightMoves();
+  updateHints();
+  checkEnd();
 }
 
-// montre les prochains coups possibles
-function highlightMoves() {
+// =====================
+// AIDE (COULEURS)
+// =====================
+function countNextMoves(i, j) {
+  let count = 0;
+
+  for (let m of moves) {
+    let ni = i + m[0];
+    let nj = j + m[1];
+
+    if (
+      ni >= 0 && ni < N &&
+      nj >= 0 && nj < N &&
+      data[ni][nj] === 0
+    ) {
+      count++;
+    }
+  }
+  return count;
+}
+
+function updateHints() {
   clearHighlights();
 
-  if (!currentPos) return;
+  if (!helpMode || !currentPos) return;
 
   for (let m of moves) {
     let ni = currentPos[0] + m[0];
@@ -76,12 +101,25 @@ function highlightMoves() {
       nj >= 0 && nj < N &&
       data[ni][nj] === 0
     ) {
-      document.getElementById(`cell-${ni}-${nj}`).style.background = "#88ff88";
+      let remaining = countNextMoves(ni, nj);
+      let cell = document.getElementById(`cell-${ni}-${nj}`);
+
+      if (remaining === 0) {
+        cell.style.background = "red";
+      } else if (remaining === 1) {
+        cell.style.background = "pink";
+      } else if (remaining === 2) {
+        cell.style.background = "purple";
+      } else {
+        cell.style.background = "#88ff88";
+      }
     }
   }
 }
 
-// reset couleurs
+// =====================
+// RESET COULEURS
+// =====================
 function clearHighlights() {
   for (let i = 0; i < N; i++) {
     for (let j = 0; j < N; j++) {
@@ -93,9 +131,20 @@ function clearHighlights() {
 }
 
 // =====================
-// SCORE (inspiré Python)
+// TOGGLE AIDE
 // =====================
+window.toggleHelp = function () {
+  helpMode = !helpMode;
 
+  const btn = document.getElementById("helpBtn");
+  btn.innerText = "Aide: " + (helpMode ? "ON" : "OFF");
+
+  updateHints();
+};
+
+// =====================
+// SCORE
+// =====================
 function computeScore() {
   let sumsCol = Array(N).fill(0);
   let sumsRow = Array(N).fill(0);
@@ -116,7 +165,6 @@ function computeScore() {
     max = Math.max(max, sumsCol[i], sumsRow[i]);
   }
 
-  // score = équilibre + progression
   let filled = current - 1;
   let balance = max - min;
 
@@ -124,9 +172,8 @@ function computeScore() {
 }
 
 // =====================
-// FIN DE PARTIE
+// FIN
 // =====================
-
 function isGameOver() {
   for (let i = 0; i < N; i++) {
     for (let j = 0; j < N; j++) {
@@ -136,7 +183,6 @@ function isGameOver() {
   return true;
 }
 
-// hook après chaque coup
 function checkEnd() {
   if (isGameOver()) {
     let score = computeScore();
@@ -144,17 +190,9 @@ function checkEnd() {
   }
 }
 
-// override click pour inclure fin
-const originalClick = click;
-click = function(i, j) {
-  originalClick(i, j);
-  checkEnd();
-};
-
 // =====================
-// SUBMIT SCORE
+// SUBMIT
 // =====================
-
 window.submit = async function () {
   const name = document.getElementById("name").value || "Anonyme";
   const score = computeScore();
@@ -162,4 +200,3 @@ window.submit = async function () {
   await submitScore(name, score);
   loadLeaderboard();
 };
-
