@@ -188,7 +188,7 @@ function isGameOver() {
 
 function checkEnd() {
   if (isGameOver()) {
-    if (filled == 100) {
+    if (current > 100) {
       let score = computeScore();
       alert("Partie terminée ! Score: " + score);
     }
