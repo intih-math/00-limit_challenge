@@ -188,8 +188,13 @@ function isGameOver() {
 
 function checkEnd() {
   if (isGameOver()) {
-    let score = computeScore();
-    alert("Partie terminée ! Score: " + score);
+    if (filled == 100) {
+      let score = computeScore();
+      alert("Partie terminée ! Score: " + score);
+    }
+    else {
+      alert("Vous n'avez plus de coup, la grille est incomplète. Réessayez.");
+    }
   }
 }
 
