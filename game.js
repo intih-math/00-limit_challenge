@@ -10,7 +10,7 @@ const moves = [
 ];
 
 const game = document.getElementById("game");
-game.style.gridTemplateColumns = `repeat(${N}, 60px)`;
+game.style.gridTemplateColumns = `repeat(${N}, 40px)`;
 
 // init grille
 for (let i = 0; i < N; i++) {
