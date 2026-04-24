@@ -113,7 +113,7 @@ function updateHints() {
       } else {
         cell.style.background = "#88ff88";
       }
-      if (helpMode) {
+      if (!helpMode) {
         cell.style.background = "#88ff88";
       }
     }
