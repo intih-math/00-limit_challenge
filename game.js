@@ -2,7 +2,7 @@ const N = 10;
 let data = [];
 let current = 1;
 let currentPos = null;
-let helpMode = false;
+let helpMode = true;
 
 // déplacements (comme Python)
 const moves = [
@@ -90,7 +90,7 @@ function countNextMoves(i, j) {
 function updateHints() {
   clearHighlights();
 
-  if (!helpMode || !currentPos) return;
+  if (!currentPos) return;
 
   for (let m of moves) {
     let ni = currentPos[0] + m[0];
@@ -111,6 +111,9 @@ function updateHints() {
       } else if (remaining === 2) {
         cell.style.background = "purple";
       } else {
+        cell.style.background = "#88ff88";
+      }
+      if (helpMode) {
         cell.style.background = "#88ff88";
       }
     }
@@ -168,7 +171,7 @@ function computeScore() {
   let filled = current - 1;
   let balance = max - min;
 
-  return filled * 10 - balance;
+  return balance;
 }
 
 // =====================
