@@ -267,12 +267,54 @@ function checkEnd() {
   }
 }
 
+window.loadGrid = function () {
+  const input = document.getElementById("loadInput").value.trim();
+  if (!input) return;
+
+  const parts = input.split(" ");
+  if (parts.length < 3) {
+    alert("Format: taille x,y chemin");
+    return;
+  }
+
+  const posStr = parts[1];
+  const path = parts[2];
+  N = int(Math.sqrt(path.length+1));
+
+  // grille temporaire (NE PAS afficher)
+  let temp = Array.from({ length: N }, () =>
+    Array.from({ length: N }, () => 0)
+  );
+
+  let pos = posStr.split(",").map(Number);
+  let i = pos[0];
+  let j = pos[1];
+
+  let val = 1;
+  temp[i][j] = val++;
+
+  // reconstruction parcours
+  for (let k = 0; k < path.length; k++) {
+    let moveIndex = parseInt(path[k]);
+    let move = moves[moveIndex];
+
+    if (!move) continue;
+
+    // version circulaire comme Python
+    i = (i + move[0] + N) % N;
+    j = (j + move[1] + N) % N;
+
+    temp[i][j] = val++;
+  }
+
+  return computeFullScore(N,temp);
+};
 // =====================
 // SUBMIT
 // =====================
 window.submit = async function () {
   const name = document.getElementById("name").value || "Anonyme";
-  const score = computeScore();
+  sc = window.loadGrid()
 
   await submitScore(name, score);
   loadLeaderboard();
