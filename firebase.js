@@ -17,12 +17,19 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-window.submitScore = async function (name, score) {
-  await addDoc(collection(db, "scores"), {
+window.submit = async function () {
+  const name = document.getElementById("name").value || "Anonyme";
+
+  const scores = computeFullScore(data);
+
+  await submitScore({
     name,
-    score,
-    time: Date.now()
+    plus: scores.diffRC,
+    plusX: scores.diffDiag,
+    balance: scores.balance
   });
+
+  loadLeaderboard();
 };
 
 window.loadLeaderboard = async function () {
