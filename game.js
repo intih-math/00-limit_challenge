@@ -90,7 +90,7 @@ function computeFullScore(N,grid) {
     balanceY += weights[i] * sumsRow[i];
   }
 
-  let balance = Math.m(Minath.abs(balanceX), Math.abs(balanceY));
+  let balance = Math.min(Minath.abs(balanceX), Math.abs(balanceY));
   return { diffRC, diffDiag, balance };
   
 }
