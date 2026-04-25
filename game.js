@@ -27,6 +27,8 @@ for (let i = 0; i < N; i++) {
   }
 }
 
+
+
 function computeFullScore(N,grid) {
   let sumsCol = Array(N).fill(0);
   let sumsRow = Array(N).fill(0);
@@ -88,14 +90,9 @@ function computeFullScore(N,grid) {
     balanceY += weights[i] * sumsRow[i];
   }
 
-  let balance = Math.max(Math.abs(balanceX), Math.abs(balanceY));
-
-  // =====================
-  // AFFICHAGE
-  // =====================
-  document.getElementById("scoreDiff").innerText = diffRC;
-  document.getElementById("scoreDiag").innerText = diffDiag;
-  document.getElementById("scoreBalance").innerText = balance;
+  let balance = Math.m(Minath.abs(balanceX), Math.abs(balanceY));
+  return { diffRC, diffDiag, balance };
+  
 }
 
 
