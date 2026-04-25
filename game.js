@@ -27,6 +27,78 @@ for (let i = 0; i < N; i++) {
   }
 }
 
+function computeFullScore(N,grid) {
+  let sumsCol = Array(N).fill(0);
+  let sumsRow = Array(N).fill(0);
+  let diag1 = Array(N).fill(0);
+  let diag2 = Array(N).fill(0);
+
+  // =====================
+  // SOMMES
+  // =====================
+  for (let i = 0; i < N; i++) {
+    for (let j = 0; j < N; j++) {
+      let v = grid[i][j];
+
+      sumsCol[i] += v;
+      sumsRow[j] += v;
+
+      diag1[(i + j) % N] += v;
+      diag2[(i - j + N) % N] += v;
+    }
+  }
+
+  // =====================
+  // 1️⃣ SCORE LIGNES/COLONNES
+  // =====================
+  let minRC = Infinity;
+  let maxRC = -Infinity;
+
+  for (let i = 0; i < N; i++) {
+    minRC = Math.min(minRC, sumsCol[i], sumsRow[i]);
+    maxRC = Math.max(maxRC, sumsCol[i], sumsRow[i]);
+  }
+
+  let diffRC = maxRC - minRC;
+
+  // =====================
+  // 2️⃣ SCORE DIAGONALES
+  // =====================
+  let minD = Math.min(minRC,...diag1, ...diag2);
+  let maxD = Math.max(maxRC,...diag1, ...diag2);
+
+  let diffDiag = maxD - minD;
+
+  // =====================
+  // 3️⃣ BALANCE
+  // =====================
+  let weights = [];
+  let w = int((N-1)/2)*2;
+
+  for (let i = 0; i < N; i++) {
+    weights[i] = w;
+    w -= 2;
+  }
+
+  let balanceX = 0;
+  let balanceY = 0;
+
+  for (let i = 0; i < N; i++) {
+    balanceX += weights[i] * sumsCol[i];
+    balanceY += weights[i] * sumsRow[i];
+  }
+
+  let balance = Math.max(Math.abs(balanceX), Math.abs(balanceY));
+
+  // =====================
+  // AFFICHAGE
+  // =====================
+  document.getElementById("scoreDiff").innerText = diffRC;
+  document.getElementById("scoreDiag").innerText = diffDiag;
+  document.getElementById("scoreBalance").innerText = balance;
+}
+
+
 // =====================
 // VALIDATION MOUVEMENT
 // =====================
