@@ -13,6 +13,11 @@ body {
   margin: 20px;
 }
 
+#runBtn.valid {
+    background-color: #4CAF50;
+    color: white;
+}
+
 /* grille */
 #game {
   display: grid;
