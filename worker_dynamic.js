@@ -1,28 +1,27 @@
 importScripts("algo_dynamic_n.js");
 
-const btn = document.getElementById("runBtn");
-
 onmessage = function(e) {
-    const data = e.data;
+    const { solution } = e.data;
 
-    if (data.type === "init_ok") {
-        document.getElementById("status").textContent =
-            "Valide";
+    try {
+        const N = Math.sqrt(solution.replace(/\D/g, "").length);
 
-        btn.classList.add("valid"); // 👉 bouton devient vert
-        return;
+        init(N, solution);
+
+        postMessage({ type: "init_ok" });
+
+        function loop() {
+            const res = step(2000);
+            postMessage(res);
+            setTimeout(loop, 0);
+        }
+
+        loop();
+
+    } catch (err) {
+        postMessage({
+            type: "init_error",
+            message: err.toString()
+        });
     }
-
-    if (data.type === "init_error") {
-        document.getElementById("status").textContent =
-            "❌";
-
-        btn.classList.remove("valid"); // 👉 redevient normal
-        worker.terminate();
-        return;
-    }
-
-    // optimisation
-    document.getElementById("output").textContent =
-        "Score: " + data.score;
 };
