@@ -1,34 +1,17 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<title>Mode Expert</title>
-<style>
-body { font-family: Arial; }
-.result { cursor: pointer; padding: 5px; }
-.result:hover { background: #eef; }
-</style>
-</head>
-<body>
-
-<h2>Mode Expert</h2>
-
-<select id="mode">
-  <option value="0">+</option>
-  <option value="1">+x</option>
-  <option value="2">balance</option>
+<select id="size">
+  <script>
+    for (let i=5;i<=40;i++) {
+        document.write(`<option value="${i}">${i} x ${i}</option>`);
+    }
+  </script>
 </select>
 
 <br><br>
 
-<textarea id="input" rows="4" cols="50"></textarea>
+<textarea id="input"></textarea>
 
 <br><br>
 <button onclick="start()">Lancer</button>
-<button onclick="stop()">Stop</button>
-
-<h3>Top 10</h3>
-<div id="results"></div>
 
 <script>
 let worker;
@@ -36,39 +19,16 @@ let worker;
 function start() {
     if (worker) worker.terminate();
 
-    worker = new Worker("worker.js");
+    let N = parseInt(document.getElementById("size").value);
+    let solution = document.getElementById("input").value;
 
-    worker.onmessage = function(e) {
-        display(e.data);
+    worker = new Worker("worker_dynamic.js");
+
+    worker.onmessage = (e) => {
+        document.getElementById("input").value = e.data.solution;
+        console.log("score:", e.data.score);
     };
 
-    worker.postMessage({
-        solution: document.getElementById("input").value,
-        mode: document.getElementById("mode").value
-    });
-}
-
-function stop() {
-    if (worker) worker.terminate();
-}
-
-function display(results) {
-    let div = document.getElementById("results");
-    div.innerHTML = "";
-
-    results.forEach(r => {
-        let el = document.createElement("div");
-        el.className = "result";
-        el.textContent = r.text + " (score=" + r.score + ")";
-
-        el.onclick = () => {
-            document.getElementById("input").value = r.text;
-        };
-
-        div.appendChild(el);
-    });
+    worker.postMessage({solution, N});
 }
 </script>
-
-</body>
-</html>
