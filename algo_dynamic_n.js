@@ -86,68 +86,105 @@ function computeScore() {
 }
 
 // =========================
-// 🔁 SWAP
+// 🔍 Trouver position d'une valeur
 // =========================
-function applySwap(i, j) {
-    let vi = grid[i];
-    let vj = grid[j];
-
-    let xi = (i / N) | 0, yi = i % N;
-    let xj = (j / N) | 0, yj = j % N;
-
-    rowSum[xi] -= vi;
-    colSum[yi] -= vi;
-
-    rowSum[xj] -= vj;
-    colSum[yj] -= vj;
-
-    grid[i] = vj;
-    grid[j] = vi;
-
-    pos[vi] = j;
-    pos[vj] = i;
-
-    rowSum[xi] += vj;
-    colSum[yi] += vj;
-
-    rowSum[xj] += vi;
-    colSum[yj] += vi;
+function findValue(v) {
+    for (let i = 0; i < SIZE; i++) {
+        if (grid[i] === v) return i;
+    }
+    return -1;
 }
 
 // =========================
-// 🔥 MUTATION
+// 🔍 Détection parallélogramme (équivalent Python parallel())
+// =========================
+function detectParallel() {
+    for (let val1 = 1; val1 < SIZE - 1; val1++) {
+
+        let i1 = findValue(val1);
+        let i2 = findValue(val1 + 1);
+
+        if (i1 < 0 || i2 < 0) continue;
+
+        let x1 = (i1 / N) | 0, y1 = i1 % N;
+        let x2 = (i2 / N) | 0, y2 = i2 % N;
+
+        let dx = x2 - x1;
+        let dy = y2 - y1;
+
+        for (let k = 0; k < DIRS.length; k++) {
+
+            let [dxk, dyk] = DIRS[k];
+
+            let x3 = (x1 + dxk + N) % N;
+            let y3 = (y1 + dyk + N) % N;
+
+            let i3 = x3 * N + y3;
+            let val3 = grid[i3];
+
+            if (val3 <= val1) continue;
+
+            let x4 = (x3 + dx + N) % N;
+            let y4 = (y3 + dy + N) % N;
+
+            let i4 = x4 * N + y4;
+            let val4 = grid[i4];
+
+            if (val4 === val3 + 1 && val4 > val1 + 2) {
+                return { val1, val3 };
+            }
+        }
+    }
+
+    return null;
+}
+
+// =========================
+// 🔁 Transformation (équivalent Python altern())
+// =========================
+function applyAltern(val1, val3) {
+
+    let positions = [];
+
+    // récupérer positions du segment à inverser
+    for (let v = val3; v > val1; v--) {
+        let idx = findValue(v);
+        if (idx >= 0) positions.push(idx);
+    }
+
+    // réassigner les valeurs
+    let newVal = val1 + 1;
+
+    for (let idx of positions) {
+        grid[idx] = newVal;
+        newVal++;
+    }
+}
+
+// =========================
+// 🔥 Mutation complète (parallel + altern + acceptation)
 // =========================
 function tryMutation() {
-    let v = 1 + (Math.random() * (SIZE - 2)) | 0;
 
-    let i1 = pos[v];
-    let i2 = pos[v+1];
+    let res = detectParallel();
+    if (!res) return;
 
-    let d = DIRS[(Math.random() * DIRS.length) | 0];
+    // sauvegarde
+    let backup = grid.slice();
 
-    let i3 = move(i1, d[0], d[1]);
-
-    let x1 = (i1 / N) | 0, y1 = i1 % N;
-    let x2 = (i2 / N) | 0, y2 = i2 % N;
-
-    let dx = x2 - x1;
-    let dy = y2 - y1;
-
-    let i4 = move(i3, dx, dy);
-
-    if (i3 === i4) return;
-
-    applySwap(i3, i4);
+    applyAltern(res.val1, res.val3);
 
     let newScore = computeScore();
 
     if (newScore <= bestScore) {
         bestScore = newScore;
     } else {
-        applySwap(i3, i4); // rollback
+        // rollback
+        for (let i = 0; i < SIZE; i++) {
+            grid[i] = backup[i];
+        }
     }
 }
-
 // =========================
 // 🔁 STEP
 // =========================
