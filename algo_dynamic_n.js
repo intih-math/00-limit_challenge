@@ -31,7 +31,7 @@ function init(Nval, text) {
         .map(x => parseInt(x))
         .filter(x => !isNaN(x));
 
-    if (values.length !== SIZE) {
+    if (values.length !== SIZE-1) {
         throw "Solution invalide pour N=" + N;
     }
 
