@@ -19,7 +19,7 @@ for (let i = 0; i < N; i++) {
   for (let j = 0; j < N; j++) {
     data[i][j] = 0;
 
-    const btn = document.createElement("button_g");
+    const btn = document.createElement("button");
     btn.id = `cell-${i}-${j}`;
     btn.onclick = () => click(i, j);
 
