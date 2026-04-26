@@ -280,6 +280,7 @@ window.loadGrid = function () {
   const posStr = parts[1];
   const path = parts[2];
   N = int(Math.sqrt(path.length+1));
+  alert("N:"+N);
 
   // grille temporaire (NE PAS afficher)
   let temp = Array.from({ length: N }, () =>
