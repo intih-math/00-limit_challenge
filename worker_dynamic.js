@@ -2,7 +2,7 @@ importScripts("algo_dynamic_n.js");
 
 const btn = document.getElementById("runBtn");
 
-worker.onmessage = function(e) {
+onmessage = function(e) {
     const data = e.data;
 
     if (data.type === "init_ok") {
