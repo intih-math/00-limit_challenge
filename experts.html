@@ -21,23 +21,23 @@ function start() {
 
     worker.onmessage = (e) => {
         const data = e.data;
-
+    
         if (data.type === "init_ok") {
             document.getElementById("status").textContent = "✅ Valide";
-            btn.classList.add("valid");
+            document.getElementById("runBtn").classList.add("valid");
             return;
         }
-
+    
         if (data.type === "init_error") {
             document.getElementById("status").textContent = "❌ " + data.message;
             return;
         }
-
-        // optimisation
+    
+        // 🔥 affichage live
         document.getElementById("input").value = data.solution;
-        console.log("score:", data.score);
+        document.getElementById("score").textContent =
+            "Score: " + data.score;
     };
-
     worker.postMessage({ solution });
 }
 </script>
