@@ -1,7 +1,7 @@
 <textarea id="input"></textarea>
 
 <br><br>
-<button id="runBtn" onclick="run()">Lancer</button>
+<button id="runBtn" onclick="start()">Lancer</button>
 
 <script>
 let worker;
@@ -9,7 +9,6 @@ let worker;
 function start() {
     if (worker) worker.terminate();
 
-    let N = parseInt(document.getElementById("size").value);
     let solution = document.getElementById("input").value;
 
     worker = new Worker("worker_dynamic.js");
