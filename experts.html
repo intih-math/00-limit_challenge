@@ -3,21 +3,47 @@
 <br><br>
 <button id="runBtn" onclick="start()">Lancer</button>
 
+<div id="status"></div>
+
 <script>
 let worker;
 
 function start() {
     if (worker) worker.terminate();
 
+    const btn = document.getElementById("runBtn");
+    btn.classList.remove("valid");
+
     let solution = document.getElementById("input").value;
 
     worker = new Worker("worker_dynamic.js");
 
     worker.onmessage = (e) => {
-        document.getElementById("input").value = e.data.solution;
-        console.log("score:", e.data.score);
+        const data = e.data;
+
+        if (data.type === "init_ok") {
+            document.getElementById("status").textContent = "✅ Valide";
+            btn.classList.add("valid");
+            return;
+        }
+
+        if (data.type === "init_error") {
+            document.getElementById("status").textContent = "❌ " + data.message;
+            return;
+        }
+
+        // optimisation
+        document.getElementById("input").value = data.solution;
+        console.log("score:", data.score);
     };
 
-    worker.postMessage({solution, N});
+    worker.postMessage({ solution });
 }
 </script>
+
+<style>
+#runBtn.valid {
+    background-color: green;
+    color: white;
+}
+</style>
