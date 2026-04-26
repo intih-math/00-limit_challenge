@@ -86,25 +86,13 @@ function computeScore() {
 }
 
 // =========================
-// 🔍 Trouver position d'une valeur
-// =========================
-function findValue(v) {
-    for (let i = 0; i < SIZE; i++) {
-        if (grid[i] === v) return i;
-    }
-    return -1;
-}
-
-// =========================
-// 🔍 Détection parallélogramme (équivalent Python parallel())
+// 🔍 Détection parallélogramme
 // =========================
 function detectParallel() {
     for (let val1 = 1; val1 < SIZE - 1; val1++) {
 
-        let i1 = findValue(val1);
-        let i2 = findValue(val1 + 1);
-
-        if (i1 < 0 || i2 < 0) continue;
+        let i1 = pos[val1];
+        let i2 = pos[val1 + 1];
 
         let x1 = (i1 / N) | 0, y1 = i1 % N;
         let x2 = (i2 / N) | 0, y2 = i2 % N;
@@ -131,58 +119,106 @@ function detectParallel() {
             let val4 = grid[i4];
 
             if (val4 === val3 + 1 && val4 > val1 + 2) {
-                return { val1, val3 };
+                return { val1, val3, k };
             }
         }
     }
-
     return null;
 }
 
 // =========================
-// 🔁 Transformation (équivalent Python altern())
+// 🔁 Altern (géométrique)
 // =========================
-function applyAltern(val1, val3) {
+function applyAltern(val1, val3, k) {
 
-    let positions = [];
+    let i1 = pos[val1];
+    let i2 = pos[val1 + 1];
 
-    // récupérer positions du segment à inverser
-    for (let v = val3; v > val1; v--) {
-        let idx = findValue(v);
-        if (idx >= 0) positions.push(idx);
+    let x1 = (i1 / N) | 0, y1 = i1 % N;
+    let x2 = (i2 / N) | 0, y2 = i2 % N;
+
+    let dx = x2 - x1;
+    let dy = y2 - y1;
+
+    let kInv = (k + 4) % 8;
+    let [dxkInv, dykInv] = DIRS[kInv];
+
+    let path = [];
+    let cx = x1;
+    let cy = y1;
+
+    for (let v = val1; v <= val3; v++) {
+
+        let idx = cx * N + cy;
+        path.push(idx);
+
+        if ((v - val1) % 2 === 0) {
+            cx = (cx + dxkInv + N) % N;
+            cy = (cy + dykInv + N) % N;
+        } else {
+            cx = (cx + dx + N) % N;
+            cy = (cy + dy + N) % N;
+        }
     }
 
-    // réassigner les valeurs
-    let newVal = val1 + 1;
+    // récupérer + inverser
+    let vals = path.map(i => grid[i]).reverse();
 
-    for (let idx of positions) {
-        grid[idx] = newVal;
-        newVal++;
+    // appliquer + maj pos
+    for (let i = 0; i < path.length; i++) {
+        let idx = path[i];
+        let v = vals[i];
+
+        grid[idx] = v;
+        pos[v] = idx;
     }
 }
 
 // =========================
-// 🔥 Mutation complète (parallel + altern + acceptation)
+// 🔄 Recompute complet sums
+// =========================
+function recomputeSums() {
+
+    rowSum.fill(0);
+    colSum.fill(0);
+
+    for (let i = 0; i < SIZE; i++) {
+        let v = grid[i];
+
+        let x = (i / N) | 0;
+        let y = i % N;
+
+        rowSum[x] += v;
+        colSum[y] += v;
+    }
+}
+
+// =========================
+// 🔥 Mutation complète
 // =========================
 function tryMutation() {
 
     let res = detectParallel();
     if (!res) return;
 
-    // sauvegarde
-    let backup = grid.slice();
+    let backupGrid = grid.slice();
+    let backupPos  = pos.slice();
 
-    applyAltern(res.val1, res.val3);
+    applyAltern(res.val1, res.val3, res.k);
+
+    // 🔴 important
+    recomputeSums();
 
     let newScore = computeScore();
 
     if (newScore <= bestScore) {
         bestScore = newScore;
     } else {
-        // rollback
-        for (let i = 0; i < SIZE; i++) {
-            grid[i] = backup[i];
-        }
+        grid.set(backupGrid);
+        pos.set(backupPos);
+
+        // restaurer sums
+        recomputeSums();
     }
 }
 // =========================
