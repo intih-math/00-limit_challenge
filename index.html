@@ -5,13 +5,26 @@
   <title>0² limit</title>
   <link rel="stylesheet" href="style.css">
 </head>
+<style>
+  /* Bouton carré 40x40 */
+.btn-small {
+  width: 40px;
+  height: 40px;
+}
+
+/* Bouton rectangle 80x40 */
+.btn-large {
+  width: 80px;
+  height: 40px;
+}
+</style>
 <body style="background-color": black;>
 
 <h1>🧠 🧠 🧠 🧠 🧠</h1>
 <h3>Vous découvrez le jeu ? Remplissez manuellement la grille ci-dessous,</h3> 
 <h3>cliquez sur une case et laissez vous guider ! Le rouge ne porte pas bonheur.</h3>
 <a href="experts.html">
-    <button>Mode Expert</button>
+    <button class="btn-large">Mode Expert</button>
 </a>
   
 <div class="container">
@@ -30,11 +43,11 @@
 </div>
   
 <div id="controls">
-  <button onclick="toggleHelp()" id="helpBtn">Aide: OFF</button>
+  <button class="btn-large" onclick="toggleHelp()" id="helpBtn">Aide: OFF</button>
 
   <input type="text" id="name" placeholder="Pseudo">
   <input type="text" id="loadInput" placeholder="Parcours">
-  <button onclick="submit()">Envoyer</button>
+  <button class="btn-large" onclick="submit()">Envoyer</button>
 </div>
 
 <h3></h3> 
