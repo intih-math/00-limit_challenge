@@ -267,7 +267,7 @@ function checkEnd() {
   }
 }
 
-window.loadGrid = function () {
+function loadGrid() {
   const input = document.getElementById("loadInput").value.trim();
   if (!input) return;
 
