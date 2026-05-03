@@ -27,6 +27,11 @@ for (let i = 0; i < N; i++) {
   }
 }
 
+async function getRecords() {
+  const res = await fetch("records.json");
+  return await res.json();
+}
+
 function displayRecords(records) {
   const container = document.getElementById("leaderboard");
   container.innerHTML = "";
