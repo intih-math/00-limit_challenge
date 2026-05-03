@@ -75,7 +75,7 @@ function computeFullScore(N,grid) {
   // 3️⃣ BALANCE
   // =====================
   let weights = [];
-  let w = int((N-1)/2)*2;
+  let w = Math.floor((N-1)/2)*2;
 
   for (let i = 0; i < N; i++) {
     weights[i] = w;
@@ -90,7 +90,7 @@ function computeFullScore(N,grid) {
     balanceY += weights[i] * sumsRow[i];
   }
 
-  let balance = Math.min(Minath.abs(balanceX), Math.abs(balanceY));
+  let balance = Math.min(Math.abs(balanceX), Math.abs(balanceY));
   return { diffRC, diffDiag, balance };
   
 }
@@ -315,8 +315,18 @@ function loadGrid() {
 // =====================
 window.submit = async function () {
   const name = document.getElementById("name").value || "Anonyme";
-  sc = window.loadGrid()
 
-  await submitScore(name, score);
+  const result = window.loadGrid();
+
+  if (!result) return;
+
+  // 👉 affichage dans la page
+  document.getElementById("diffRC").innerText = result.diffRC;
+  document.getElementById("diffDiag").innerText = result.diffDiag;
+  document.getElementById("balance").innerText = result.balance;
+
+  // 👉 si tu veux envoyer un score (ex: diffDiag)
+  await submitScore(name, result.diffDiag);
+
   loadLeaderboard();
 };
