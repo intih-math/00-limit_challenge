@@ -279,7 +279,7 @@ function loadGrid() {
 
   const posStr = parts[1];
   const path = parts[2];
-  N = int(Math.sqrt(path.length+1));
+  N = Math.floor(Math.sqrt(path.length+1));
   alert("N:"+N);
 
   // grille temporaire (NE PAS afficher)
