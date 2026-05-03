@@ -32,6 +32,23 @@ async function getRecords() {
   return await res.json();
 }
 
+function displayRecordItem(label, recordArray) {
+  let html = `${label} : `;
+
+  const types = ["parcours", "cycle"];
+
+  recordArray.forEach((rec, i) => {
+    if (rec) {
+      html += `
+        <a href="#" onclick="loadRecord(\`${rec.input}\`); return false;">
+          ${types[i]} (${rec.value ?? "✔"})
+        </a> `;
+    }
+  });
+
+  return html + "<br>";
+}
+
 function displayRecords(records) {
   const container = document.getElementById("leaderboard");
   container.innerHTML = "";
@@ -43,35 +60,15 @@ function displayRecords(records) {
 
     let html = `<strong>n = ${n}</strong><br>`;
 
-    if (records[n].diffRC) {
-      html += `🟢 + : 
-        <a href="#" onclick="loadRecord('${records[n].diffRC.input}')">
-          ${records[n].diffRC.value} (${records[n].diffRC.name})
-        </a><br>`;
-    }
-
-    if (records[n].diffDiag) {
-      html += `🔵 +x : 
-        <a href="#" onclick="loadRecord('${records[n].diffDiag.input}')">
-          ${records[n].diffDiag.value} (${records[n].diffDiag.name})
-        </a><br>`;
-    }
-
-    if (records[n].balance.length > 0) {
-      html += `⚖️ Balance :<br>`;
-
-      records[n].balance.forEach((b, i) => {
-        html += `&nbsp;&nbsp;
-          <a href="#" onclick="loadRecord('${b.input}')">
-            solution ${i + 1} (${b.name})
-          </a><br>`;
-      });
-    }
+    html += displayRecordItem("🟢 +", records[n].diffRC);
+    html += displayRecordItem("🔵 +x", records[n].diffDiag);
+    html += displayRecordItem("⚖️ Balance", records[n].balance);
 
     block.innerHTML = html;
     container.appendChild(block);
   }
 }
+
 function updateScoreDisplay() {
   const result = computeFullScore(N, data);
 
