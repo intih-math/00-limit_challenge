@@ -1,0 +1,44 @@
+{
+  "5": {
+    "diffRC": [
+      {
+        "name": "intih",
+        "value": 16,
+        "input": "5 0,0 272747250247520633064163"
+      },
+      {
+        "name": "intih",
+        "value": 20,
+        "input": "5 2,4 571472503520630641305527"
+      }
+    ],
+    "diffDiag": [
+      {
+        "name": "intih",
+        "value": 49,
+        "input": "5 0,0 030525024772461306414725"
+      },
+      {
+        "name": "intih",
+        "value": 49,
+        "input": "5 0,2 163050247520633064161474"
+      }
+    ],
+    "balance": [
+      null,
+      null
+    ]
+  },
+
+  "24": {
+    "diffRC": [null, null],
+    "diffDiag": [null, null],
+    "balance": [
+      {
+        "name": "intih",
+        "input": "24 0,10 ..."
+      },
+      null
+    ]
+  }
+}
