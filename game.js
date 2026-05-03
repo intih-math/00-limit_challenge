@@ -27,6 +27,46 @@ for (let i = 0; i < N; i++) {
   }
 }
 
+function displayRecords(records) {
+  const container = document.getElementById("leaderboard");
+  container.innerHTML = "";
+
+  const sortedN = Object.keys(records).sort((a, b) => a - b);
+
+  for (let n of sortedN) {
+    const block = document.createElement("li");
+
+    let html = `<strong>n = ${n}</strong><br>`;
+
+    if (records[n].diffRC) {
+      html += `🟢 + : 
+        <a href="#" onclick="loadRecord('${records[n].diffRC.input}')">
+          ${records[n].diffRC.value} (${records[n].diffRC.name})
+        </a><br>`;
+    }
+
+    if (records[n].diffDiag) {
+      html += `🔵 +x : 
+        <a href="#" onclick="loadRecord('${records[n].diffDiag.input}')">
+          ${records[n].diffDiag.value} (${records[n].diffDiag.name})
+        </a><br>`;
+    }
+
+    if (records[n].balance.length > 0) {
+      html += `⚖️ Balance :<br>`;
+
+      records[n].balance.forEach((b, i) => {
+        html += `&nbsp;&nbsp;
+          <a href="#" onclick="loadRecord('${b.input}')">
+            solution ${i + 1} (${b.name})
+          </a><br>`;
+      });
+    }
+
+    block.innerHTML = html;
+    container.appendChild(block);
+  }
+}
 function updateScoreDisplay() {
   const result = computeFullScore(N, data);
 
