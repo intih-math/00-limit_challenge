@@ -27,7 +27,13 @@ for (let i = 0; i < N; i++) {
   }
 }
 
+function updateScoreDisplay() {
+  const result = computeFullScore(N, data);
 
+  document.getElementById("diffRC").innerText = result.diffRC;
+  document.getElementById("diffDiag").innerText = result.diffDiag;
+  document.getElementById("balance").innerText = result.balance;
+}
 
 function computeFullScore(N,grid) {
   let sumsCol = Array(N).fill(0);
@@ -132,6 +138,7 @@ function click(i, j) {
   current++;
 
   updateHints();
+  updateScoreDisplay();
   checkEnd();
 }
 
