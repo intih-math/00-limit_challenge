@@ -31,9 +31,17 @@ function init(Nval, text) {
     rowSum = new Int32Array(N);
     colSum = new Int32Array(N);
 
-    let values = text.split("")
-        .map(x => parseInt(x))
-        .filter(x => !isNaN(x));
+    // format attendu : "N x,y moves"
+    let parts = text.trim().split(" ");
+    
+    if (parts.length < 3) {
+        throw "Format invalide";
+    }
+    
+    let moves = parts[2];
+    
+    // reconstruire la grille depuis les déplacements
+    let values = buildGridFromMoves(N, parts[1], moves);
 
     if (values.length !== SIZE-1) {
         throw "Solution invalide pour N=" + N;
