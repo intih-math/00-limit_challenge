@@ -1,7 +1,8 @@
 importScripts("algo_dynamic_n.js");
 
 onmessage = function(e) {
-    const { solution } = e.data;
+    const { solution, mode } = e.data;
+    self.mode = mode || "diffRC";
 
     try {
         const parts = solution.trim().split(/\s+/);
