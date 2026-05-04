@@ -8,6 +8,10 @@ let rowSum, colSum;
 
 let bestScore;
 
+self.val1 = 1;
+self.val3 = 0;
+self.kd   = 0;
+
 // directions fixes
 const DIRS = [
   [3,0],[2,2],[0,3],[-2,2],
