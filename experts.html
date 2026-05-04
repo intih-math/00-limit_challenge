@@ -13,7 +13,13 @@
 <br>
 <a href="p1.py">[p1.py]</a><text>Optimisez une grille complète : arguments = 'taille' 'x,y' 'deplacements'</text>
 <br>
-
+<br>
+<select id="mode">
+  <option value="diffRC">+ (lignes/colonnes)</option>
+  <option value="diffDiag">+x (diagonales)</option>
+  <option value="balance">⚖️ Balance</option>
+</select>
+<br>
 <div class="container">
 
 <img src="horse_queen.jpg" id="img-left" class="side-img">
@@ -60,7 +66,8 @@ function start() {
         document.getElementById("score").textContent =
     `Score: ${data.score} | +: ${data.diffRC} | +x: ${data.diffDiag} | ⚖️: ${data.balance}`;
     };
-    worker.postMessage({ solution });
+    const mode = document.getElementById("mode").value;
+    worker.postMessage({ solution, mode });
 }
 </script>
 
