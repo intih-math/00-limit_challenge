@@ -94,7 +94,53 @@ function move(i, dx, dy) {
 
     return x * N + y;
 }
+function exportSolution() {
+    // 1️⃣ trouver position de 1
+    let startIndex = pos[1];
+    let x = (startIndex / N) | 0;
+    let y = startIndex % N;
 
+    let result = `${N} ${x},${y} `;
+
+    let current = 1;
+
+    while (current < SIZE) {
+        let nextIndex = pos[current + 1];
+
+        let nx = (nextIndex / N) | 0;
+        let ny = nextIndex % N;
+
+        let dx = nx - x;
+        let dy = ny - y;
+
+        // gestion torique (comme Python)
+        if (dx > N/2) dx -= N;
+        if (dx < -N/2) dx += N;
+        if (dy > N/2) dy -= N;
+        if (dy < -N/2) dy += N;
+
+        // trouver direction
+        let moveIndex = -1;
+        for (let k = 0; k < DIRS.length; k++) {
+            if (DIRS[k][0] === dx && DIRS[k][1] === dy) {
+                moveIndex = k;
+                break;
+            }
+        }
+
+        if (moveIndex === -1) {
+            throw "Move invalide entre " + current + " et " + (current+1);
+        }
+
+        result += moveIndex;
+
+        x = nx;
+        y = ny;
+        current++;
+    }
+
+    return result;
+}
 // =========================
 // ⚡ SCORE
 // =========================
@@ -310,6 +356,6 @@ function step(iter = 1000) {
         diffRC: full.diffRC,
         diffDiag: full.diffDiag,
         balance: full.balance,
-        solution: Array.from(grid).join("")
+        solution: exportSolution()
     };
 }
