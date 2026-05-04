@@ -56,6 +56,31 @@ function init(Nval, text) {
 // =========================
 // ⚡ UTILS
 // =========================
+function posOf(v) {
+    let i = pos[v];
+    return [(i / N) | 0, i % N];
+}
+
+function getVal([x, y]) {
+    return grid[x * N + y];
+}
+
+function setVal(x, y, v) {
+    let i = x * N + y;
+    grid[i] = v;
+    pos[v] = i;
+}
+
+function wrap([x, y], [dx, dy]) {
+    x = (x + dx + N) % N;
+    y = (y + dy + N) % N;
+    return [x, y];
+}
+
+function same(a, b) {
+    return a[0] === b[0] && a[1] === b[1];
+}
+
 function move(i, dx, dy) {
     let x = (i / N) | 0;
     let y = i % N;
@@ -81,91 +106,79 @@ function computeScore() {
 // =========================
 // 🔍 Détection parallélogramme
 // =========================
-function detectParallel() {
-    for (let val1 = 1; val1 < SIZE - 1; val1++) {
+function parallel() {
+    let found = false;
+    let reprise = true;
+    let nbIter = 0;
 
-        let i1 = pos[val1];
-        let i2 = pos[val1 + 1];
+    while (!found && nbIter < SIZE) {
+        nbIter++;
 
-        let x1 = (i1 / N) | 0, y1 = i1 % N;
-        let x2 = (i2 / N) | 0, y2 = i2 % N;
+        let pos1 = posOf(self.val1);
+        let pos2 = posOf(self.val1 + 1);
 
-        let dx = x2 - x1;
-        let dy = y2 - y1;
+        let d = [pos2[0] - pos1[0], pos2[1] - pos1[1]];
 
-        for (let k = 0; k < DIRS.length; k++) {
+        let k = reprise ? self.kd + 1 : 0;
+        reprise = false;
 
-            let [dxk, dyk] = DIRS[k];
+        while (!found && k < DIRS.length) {
+            let dk = DIRS[k];
 
-            let x3 = (x1 + dxk + N) % N;
-            let y3 = (y1 + dyk + N) % N;
+            let pos3 = wrap(pos1, dk);
+            let val3 = getVal(pos3);
 
-            let i3 = x3 * N + y3;
-            let val3 = grid[i3];
+            if (!same(pos3, pos2)) {
+                let pos4 = wrap(pos3, d);
+                let val4 = getVal(pos4);
 
-            if (val3 <= val1) continue;
+                if (val4 === val3 + 1 && val4 > self.val1 + 2) {
+                    self.val3 = val3;
+                    self.dk = k;
+                    found = true;
+                }
+            }
 
-            let x4 = (x3 + dx + N) % N;
-            let y4 = (y3 + dy + N) % N;
+            k++;
+        }
 
-            let i4 = x4 * N + y4;
-            let val4 = grid[i4];
+        self.kd = k;
 
-            if (val4 === val3 + 1 && val4 > val1 + 2) {
-                return { val1, val3, k };
+        if (!found) {
+            if (self.val1 < SIZE - 1) {
+                self.val1++;
+            } else {
+                self.val1 = 1;
             }
         }
     }
-    return null;
 }
 
 // =========================
 // 🔁 Altern (géométrique)
 // =========================
-function applyAltern(val1, val3, k) {
 
-    let i1 = pos[val1];
-    let i2 = pos[val1 + 1];
+function altern() {
+    let first = self.val1;
 
-    let x1 = (i1 / N) | 0, y1 = i1 % N;
-    let x2 = (i2 / N) | 0, y2 = i2 % N;
+    if (first !== 0 && self.val3 > first) {
 
-    let dx = x2 - x1;
-    let dy = y2 - y1;
+        let positions = [];
 
-    let kInv = (k + 4) % 8;
-    let [dxkInv, dykInv] = DIRS[kInv];
+        for (let v = self.val3; v > first; v--) {
+            positions.push(posOf(v));
+        }
 
-    let path = [];
-    let cx = x1;
-    let cy = y1;
+        let newVal = first + 1;
 
-    for (let v = val1; v <= val3; v++) {
-
-        let idx = cx * N + cy;
-        path.push(idx);
-
-        if ((v - val1) % 2 === 0) {
-            cx = (cx + dxkInv + N) % N;
-            cy = (cy + dykInv + N) % N;
-        } else {
-            cx = (cx + dx + N) % N;
-            cy = (cy + dy + N) % N;
+        for (let i = 0; i < positions.length; i++) {
+            let [x, y] = positions[i];
+            setVal(x, y, newVal);
+            newVal++;
         }
     }
-
-    // récupérer + inverser
-    let vals = path.map(i => grid[i]).reverse();
-
-    // appliquer + maj pos
-    for (let i = 0; i < path.length; i++) {
-        let idx = path[i];
-        let v = vals[i];
-
-        grid[idx] = v;
-        pos[v] = idx;
-    }
 }
+
 function computeFullScoreFromFlat() {
     let sumsRow = new Int32Array(N);
     let sumsCol = new Int32Array(N);
@@ -270,7 +283,8 @@ function tryMutation() {
 // =========================
 function step(iter = 1000) {
     for (let i=0;i<iter;i++) {
-        tryMutation();
+        parallel();
+        altern();
     }
 
     const full = computeFullScoreFromFlat();
