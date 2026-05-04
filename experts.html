@@ -62,7 +62,8 @@ function start() {
         }
     
         // 🔥 affichage live
-        document.getElementById("input").value = data.solution;
+        // document.getElementById("input").value = data.solution;
+        document.getElementById("solution").textContent = data.solution;
         document.getElementById("score").textContent =
     `Score: ${data.score} | +: ${data.diffRC} | +x: ${data.diffDiag} | ⚖️: ${data.balance}`;
     };
