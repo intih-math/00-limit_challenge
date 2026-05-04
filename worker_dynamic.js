@@ -23,7 +23,7 @@ onmessage = function(e) {
         }
 
         // 🔹 3. grille
-        const gridText = parts.slice(2).join("");
+        const gridText = parts[2];
 
         init(N, gridText);
 
