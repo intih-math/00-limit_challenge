@@ -56,7 +56,7 @@ function init(Nval, text) {
     let parts = text.trim().split(/\s+/);
     
     if (parts.length < 3) {
-        throw "Format invalide";
+        throw "Format invalide ("+(parts.length)+")";
     }
     
     let moves = parts[2];
