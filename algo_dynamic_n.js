@@ -18,6 +18,27 @@ const DIRS = [
   [-3,0],[-2,-2],[0,-3],[2,-2]
 ];
 
+function buildGridFromMoves(N, start, moves) {
+    let grid = new Uint16Array(N * N);
+
+    let [x, y] = start.split(",").map(Number);
+
+    let current = 1;
+    grid[x * N + y] = current;
+
+    for (let i = 0; i < moves.length; i++) {
+        let m = parseInt(moves[i]);
+        let [dx, dy] = DIRS[m];
+
+        x = (x + dx + N) % N;
+        y = (y + dy + N) % N;
+
+        current++;
+        grid[x * N + y] = current;
+    }
+
+    return Array.from(grid);
+}
 // =========================
 // 🧱 INIT
 // =========================
@@ -43,7 +64,7 @@ function init(Nval, text) {
     // reconstruire la grille depuis les déplacements
     let values = buildGridFromMoves(N, parts[1], moves);
 
-    if (values.length !== SIZE-1) {
+    if (values.length !== SIZE) {
         throw "Solution invalide pour N=" + N;
     }
 
