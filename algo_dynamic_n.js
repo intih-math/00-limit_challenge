@@ -70,19 +70,12 @@ function move(i, dx, dy) {
 // ⚡ SCORE
 // =========================
 function computeScore() {
-    let min = 1e9, max = -1e9;
+    const full = computeFullScoreFromFlat();
 
-    for (let i=0;i<N;i++) {
-        let r = rowSum[i];
-        let c = colSum[i];
+    if (self.mode === "diffDiag") return full.diffDiag;
+    if (self.mode === "balance") return full.balance;
 
-        if (r < min) min = r;
-        if (c < min) min = c;
-        if (r > max) max = r;
-        if (c > max) max = c;
-    }
-
-    return max - min;
+    return full.diffRC; // défaut
 }
 
 // =========================
