@@ -286,13 +286,25 @@ function tryMutation() {
 // 🔁 STEP
 // =========================
 function step(iter = 1000) {
-    for (let i=0;i<iter;i++) {
+    for (let i = 0; i < iter; i++) {
+
+        let before = computeScore();
+
         parallel();
         altern();
+
+        let after = computeScore();
+
+        // rollback = refaire altern()
+        if (after > before) {
+            altern();
+        } else {
+            bestScore = after;
+        }
     }
 
     const full = computeFullScoreFromFlat();
-    
+
     return {
         score: bestScore,
         diffRC: full.diffRC,
