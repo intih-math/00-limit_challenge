@@ -53,7 +53,7 @@ function init(Nval, text) {
     colSum = new Int32Array(N);
 
     // format attendu : "N x,y moves"
-    let parts = text.trim().split(" ");
+    let parts = text.trim().split(/\s+/);
     
     if (parts.length < 3) {
         throw "Format invalide";
