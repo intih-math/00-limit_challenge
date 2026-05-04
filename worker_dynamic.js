@@ -25,7 +25,7 @@ onmessage = function(e) {
         // 🔹 3. grille
         const gridText = parts[2];
 
-        init(N, gridText);
+        init(N, solution.trim());
 
         postMessage({ type: "init_ok" });
 
