@@ -65,7 +65,7 @@ function start() {
         // document.getElementById("input").value = data.solution;
         document.getElementById("solution").textContent = data.solution;
         document.getElementById("score").textContent =
-    `Score: ${data.score} | +: ${data.diffRC} | +x: ${data.diffDiag} | ⚖️: ${data.balance}`;
+    `Score: ${data.score}  |  +  ${data.diffRC}  |  +x  ${data.diffDiag}  |  ⚖️  ${data.balance}`;
     };
     const mode = document.getElementById("mode").value;
     worker.postMessage({ solution, mode });
