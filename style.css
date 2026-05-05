@@ -1,6 +1,8 @@
 body {
   font-family: Papyrus;
   text-align: center;
+  margin: 0;
+  padding: 0;
 }
 
 /* layout horizontal */
@@ -10,7 +12,7 @@ body {
   justify-content: center;
   align-items: stretch;
   gap: 10px;
-  margin: 20px;
+  margin: 0;
 }
 
 #runBtn.valid {
