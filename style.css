@@ -24,6 +24,11 @@ body {
 }
 
 /* images */
+.front-img {
+  width: auto;
+  height: 6900px;
+  object-fit: contain;
+}
 .side-img {
   width: auto;
   height: 420px;
