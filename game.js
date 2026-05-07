@@ -163,12 +163,47 @@ function isValidMove(i, j) {
   return false;
 }
 
+function rollbackTo(value) {
+
+  for (let i = 0; i < N; i++) {
+    for (let j = 0; j < N; j++) {
+
+      if (data[i][j] > value) {
+
+        data[i][j] = 0;
+
+        const btn = document.getElementById(`cell-${i}-${j}`);
+
+        btn.innerText = "";
+        btn.style.background = "";
+        btn.style.color = "";
+      }
+
+      // retrouver position actuelle
+      if (data[i][j] === value) {
+        currentPos = [i, j];
+      }
+    }
+  }
+
+  current = value + 1;
+
+  updateHints();
+  updateScoreDisplay();
+}
+
 // =====================
 // CLICK
 // =====================
 function click(i, j) {
-  if (!isValidMove(i, j)) return;
 
+  // 🔥 retour arrière
+  if (data[i][j] !== 0) {
+    rollbackTo(data[i][j]);
+    return;
+  }
+
+  if (!isValidMove(i, j)) return;
   data[i][j] = current;
   currentPos = [i, j];
 
