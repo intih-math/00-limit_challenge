@@ -22,6 +22,11 @@ for (let i = 0; i < N; i++) {
     const btn = document.createElement("button");
     btn.id = `cell-${i}-${j}`;
     btn.onclick = () => click(i, j);
+    btn.ondblclick = () => {
+       if (data[i][j] !== 0) {
+          rollbackTo(data[i][j]);
+       }
+    };
 
     game.appendChild(btn);
   }
