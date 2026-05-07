@@ -170,6 +170,19 @@ function isValidMove(i, j) {
 
 function rollbackTo(value) {
 
+  // nombre de coups annulés
+  const removed = current - value - 1;
+
+  // confirmation seulement si >= 3
+  if (removed >= 3) {
+
+    const ok = confirm(
+      `Annuler ${removed} coups ?`
+    );
+
+    if (!ok) return;
+  }
+  
   for (let i = 0; i < N; i++) {
     for (let j = 0; j < N; j++) {
 
