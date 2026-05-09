@@ -74,6 +74,17 @@ function posOf(v) {
     return [x, y];
 }
 
+function wrap([x, y], [dx, dy]) {
+
+    const nx = x + dx;
+    const ny = y + dy;
+
+    if (nx < 0 || nx >= N) return null;
+    if (ny < 0 || ny >= N) return null;
+
+    return [nx, ny];
+}
+
 function buildGridFromMoves(N, start, moves) {
     let grid = new Uint16Array(N * N);
 
