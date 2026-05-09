@@ -80,7 +80,7 @@ button {
   padding: 10px 0;
 }
 
-#tab1:checked ~ #content1,
-#tab2:checked ~ #content2 {
+#tab1:checked ~ #optimiser,
+#tab2:checked ~ #convertir {
   display: block;
 }
