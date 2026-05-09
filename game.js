@@ -128,12 +128,12 @@ function computeFullScore(N,grid) {
   // 3️⃣ BALANCE
   // =====================
   let weights = [];
-  
+  let w = 0;
 
-  if (taille_jeu % 2 === 0) {
-    let w = N-1;
+  if (N % 2 === 0) {
+    w = N-1;
 } else {
-    let w = Math.floor((N-1)/2)*2;
+    w = Math.floor((N-1)/2)*2;
 }
 
   for (let i = 0; i < N; i++) {
