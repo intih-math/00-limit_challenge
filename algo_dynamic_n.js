@@ -107,6 +107,85 @@ function restoreSnapshot(s) {
     rowSum.set(s.rowSum);
     colSum.set(s.colSum);
 }
+// =========================
+// OPTIM base function
+// =========================
+// =========================
+// 🔍 Détection parallélogramme
+// =========================
+function parallel() {
+    let found = false;
+    let reprise = true;
+    let nbIter = 0;
+
+    while (!found && nbIter < SIZE) {
+        nbIter++;
+
+        let pos1 = posOf(self.val1);
+        let pos2 = posOf(self.val1 + 1);
+
+        let d = [pos2[0] - pos1[0], pos2[1] - pos1[1]];
+
+        let k = reprise ? self.kd + 1 : 0;
+        reprise = false;
+
+        while (!found && k < DIRS.length) {
+            let dk = DIRS[k];
+
+            let pos3 = wrap(pos1, dk);
+            let val3 = getVal(pos3);
+
+            if (!same(pos3, pos2)) {
+                let pos4 = wrap(pos3, d);
+                let val4 = getVal(pos4);
+
+                if (val4 === val3 + 1 && val4 > self.val1 + 2) {
+                    self.val3 = val3;
+                    self.dk = k;
+                    found = true;
+                }
+            }
+
+            k++;
+        }
+
+        self.kd = k;
+
+        if (!found) {
+            if (self.val1 < SIZE - 1) {
+                self.val1++;
+            } else {
+                self.val1 = 1;
+            }
+        }
+    }
+}
+
+// =========================
+// 🔁 Altern (géométrique)
+// =========================
+
+function altern() {
+    let first = self.val1;
+
+    if (first !== 0 && self.val3 > first) {
+
+        let positions = [];
+
+        for (let v = self.val3; v > first; v--) {
+            positions.push(posOf(v));
+        }
+
+        let newVal = first + 1;
+
+        for (let i = 0; i < positions.length; i++) {
+            let [x, y] = positions[i];
+            setVal(x, y, newVal);
+            newVal++;
+        }
+    }
+}
+
 
 // =========================
 // ⚡ SCORE
