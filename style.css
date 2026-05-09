@@ -24,7 +24,7 @@ body {
 }
 
 #game {
-  flex-shrink: 0;
+  display: grid;
 }
 /* =========================
    WORKER BUTTON
@@ -35,13 +35,6 @@ body {
   color: white;
 }
 
-/* =========================
-   GRILLE DE JEU
-========================= */
-
-#game {
-  display: grid;
-}
 
 /* =========================
    IMAGES
