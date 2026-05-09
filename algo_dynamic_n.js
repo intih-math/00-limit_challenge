@@ -111,6 +111,76 @@ function restoreSnapshot(s) {
 // =========================
 // ⚡ SCORE
 // =========================
+function computeFullScoreFromFlat() {
+    let sumsRow = new Int32Array(N);
+    let sumsCol = new Int32Array(N);
+    let diag1 = new Int32Array(N);
+    let diag2 = new Int32Array(N);
+
+    for (let i = 0; i < SIZE; i++) {
+        let v = grid[i];
+        let x = (i / N) | 0;
+        let y = i % N;
+
+        sumsRow[x] += v;
+        sumsCol[y] += v;
+        diag1[(x + y) % N] += v;
+        diag2[(x - y + N) % N] += v;
+    }
+
+    let minRC = Infinity;
+    let maxRC = -Infinity;
+
+    for (let i = 0; i < N; i++) {
+        minRC = Math.min(minRC, sumsRow[i], sumsCol[i]);
+        maxRC = Math.max(maxRC, sumsRow[i], sumsCol[i]);
+    }
+
+    let diffRC = maxRC - minRC;
+
+    let minD = Math.min(minRC, ...diag1, ...diag2);
+    let maxD = Math.max(maxRC, ...diag1, ...diag2);
+
+    let diffDiag = maxD - minD;
+
+    let weights = [];
+    let w = Math.floor((N - 1) / 2) * 2;
+
+    for (let i = 0; i < N; i++) {
+        weights[i] = w;
+        w -= 2;
+    }
+
+    let balanceX = 0;
+    let balanceY = 0;
+
+    for (let i = 0; i < N; i++) {
+        balanceX += weights[i] * sumsCol[i];
+        balanceY += weights[i] * sumsRow[i];
+    }
+
+    let balance = Math.min(Math.abs(balanceX), Math.abs(balanceY));
+
+    return { diffRC, diffDiag, balance };
+}
+// =========================
+// 🔄 Recompute complet sums
+// =========================
+function recomputeSums() {
+
+    rowSum.fill(0);
+    colSum.fill(0);
+
+    for (let i = 0; i < SIZE; i++) {
+        let v = grid[i];
+
+        let x = (i / N) | 0;
+        let y = i % N;
+
+        rowSum[x] += v;
+        colSum[y] += v;
+    }
+}
 
 function computeScore() {
 
