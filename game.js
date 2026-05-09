@@ -1,4 +1,4 @@
-const N = 10;
+let N = 10;
 let data = [];
 let current = 1;
 let currentPos = null;
@@ -58,7 +58,7 @@ function displayRecords(records) {
   const container = document.getElementById("leaderboard");
   container.innerHTML = "";
 
-  const sortedN = Object.keys(records).sort((a, b) => a - b);
+  const sortedN = Object.keys(records).sort((a, b) => Number(a) - Number(b));
 
   for (let n of sortedN) {
     const block = document.createElement("li");
@@ -132,9 +132,9 @@ function computeFullScore(N,grid) {
 
   if (N % 2 === 0) {
     w = N-1;
-} else {
+  } else {
     w = Math.floor((N-1)/2)*2;
-}
+  }
 
   for (let i = 0; i < N; i++) {
     weights[i] = w;
