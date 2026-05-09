@@ -59,6 +59,16 @@ button {
   font-size: 16px;
 }
 
+@media (max-width: 900px) {
+  .optimiser {
+    flex-direction: column;
+  }
+
+  .optimiser-image img {
+    height: auto;
+    width: 100%;
+  }
+}
 /* =========================
    LEADERBOARD
 ========================= */
