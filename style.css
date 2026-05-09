@@ -1,86 +1,114 @@
+/* =========================
+   BASE
+========================= */
+
 body {
   font-family: Papyrus;
   text-align: center;
   margin: 0;
   padding: 0;
+  background-color: gray;
 }
 
-/* layout horizontal */
 .container {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: stretch;
-  gap: 10px;
-  margin: 0;
+  max-width: 1000px;
+  margin: auto;
+  padding: 10px;
 }
+
+/* =========================
+   WORKER BUTTON
+========================= */
 
 #runBtn.valid {
-    background-color: #4CAF50;
-    color: white;
+  background-color: #4CAF50;
+  color: white;
 }
 
-/* grille */
+/* =========================
+   GRILLE DE JEU
+========================= */
+
 #game {
   display: grid;
 }
 
-/* images */
+/* =========================
+   IMAGES
+========================= */
+
 .front-img {
   width: auto;
   height: 740px;
   object-fit: contain;
 }
+
 .side-img {
   width: auto;
   height: 630px;
   object-fit: contain;
 }
 
-/* boutons */
+/* =========================
+   BOUTONS GRILLE
+========================= */
+
 button {
   width: 60px;
   height: 60px;
   font-size: 16px;
 }
 
+/* =========================
+   LEADERBOARD
+========================= */
+
 #leaderboard {
   list-style: none;
   padding: 0;
 }
 
-/* ===== TABS MODERNES ===== */
+/* =========================
+   TEXTAREAS (GLOBAL)
+========================= */
 
-.tabs {
-  display: flex;
-  border-bottom: 2px solid #444;
-  margin-bottom: 15px;
+textarea {
+  width: 100%;
+  font-family: monospace;
+  margin-bottom: 10px;
 }
 
-.tabs input {
-  display: none;
+/* Zone optimisation */
+#input {
+  height: 200px;
 }
 
-.tabs label {
-  padding: 10px 18px;
+#solution {
+  height: 200px;
+}
+
+/* Zone conversion */
+#gridInput {
+  height: 400px;      /* ~10 lignes visibles */
+  resize: vertical;
+}
+
+#movesOutput {
+  height: 40px;
+  white-space: nowrap;
+  overflow-x: auto;
+}
+
+/* =========================
+   BOUTONS GÉNÉRAUX
+========================= */
+
+button {
+  padding: 6px 12px;
   cursor: pointer;
-  background: #ddd;
-  margin-right: 4px;
 }
 
-.tabs input:checked + label {
-  background: white;
-  font-weight: bold;
-  border: 2px solid #444;
-  border-bottom: none;
-}
-
-.tab-content {
-  display: none;
-  padding: 10px 0;
-}
-
-#tab1:checked ~ #optimiser,
-#tab2:checked ~ #convertir {
-  display: block;
+/* Séparateur */
+hr {
+  margin: 40px 0;
 }
