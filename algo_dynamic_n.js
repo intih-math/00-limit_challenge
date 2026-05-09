@@ -67,6 +67,27 @@ function init(Nval, text) {
     bestScore = computeScore();
 }
 
+function buildGridFromMoves(N, start, moves) {
+    let grid = new Uint16Array(N * N);
+
+    let [x, y] = start.split(",").map(Number);
+
+    let current = 1;
+    grid[x * N + y] = current;
+
+    for (let i = 0; i < moves.length; i++) {
+        let m = parseInt(moves[i]);
+        let [dx, dy] = DIRS[m];
+
+        x = (x + dx + N) % N;
+        y = (y + dy + N) % N;
+
+        current++;
+        grid[x * N + y] = current;
+    }
+
+    return Array.from(grid);
+}
 // =========================
 // 🔁 Snapshot
 // =========================
