@@ -1,269 +1,243 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>0² limit : les experts</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<title>La forge des experts</title>
 
-  <style>
-    /* Zone grille conversion */
-    #gridInput {
-      width: 100%;
-      height: 400px;          /* ~10 lignes visibles */
-      font-family: monospace;
-      resize: vertical;
-    }
+<link rel="stylesheet" href="style.css">
 
-    /* Sortie sur une ligne pleine largeur */
-    #movesOutput {
-      width: 100%;
-      height: 40px;
-      font-family: monospace;
-      white-space: nowrap;
-      overflow-x: auto;
-    }
+<style>
 
-    /* Cache contenu onglets par défaut */
-    .tab-content {
-      display: none;
-      padding: 10px 0;
-    }
+body {
+  background-color: gray;
+  font-family: Arial, sans-serif;
+}
 
-    /* Affichage via radio */
-    #tab1:checked ~ #content1,
-    #tab2:checked ~ #content2 {
-      display: block;
-    }
+.container {
+  max-width: 1000px;
+  margin: auto;
+}
 
-    /* Style onglets */
-    .tabs {
-      display: flex;
-      border-bottom: 2px solid #444;
-      margin-bottom: 15px;
-    }
+/* ===== Textareas ===== */
 
-    .tabs input {
-      display: none;
-    }
+textarea {
+  width: 100%;
+  font-family: monospace;
+  margin-bottom: 10px;
+}
 
-    .tabs label {
-      padding: 10px 18px;
-      cursor: pointer;
-      background: #ddd;
-      margin-right: 4px;
-    }
+#input {
+  height: 200px;
+}
 
-    .tabs input:checked + label {
-      background: white;
-      font-weight: bold;
-      border: 2px solid #444;
-      border-bottom: none;
-    }
-  </style>
+#solution {
+  height: 200px;
+}
+
+#gridInput {
+  height: 400px;   /* ~10 lignes visibles */
+  resize: vertical;
+}
+
+#movesOutput {
+  height: 40px;
+  white-space: nowrap;
+  overflow-x: auto;
+}
+
+/* Image */
+#img-left {
+  max-width: 200px;
+  display: block;
+  margin-bottom: 15px;
+}
+
+button {
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+hr {
+  margin: 40px 0;
+}
+
+</style>
 </head>
 
-<body style="background-color: #9B7D63;">
-
-<h2>La forge des experts</h2>
+<body>
 
 <div class="container">
 
- <img src="horse_queen.jpg" id="img-left" class="side-img">
-  
- <div class="tabs">
+<h2>La forge des experts</h2>
 
-  <!-- Onglets -->
-  <input type="radio" name="tab" id="tab1" checked>
-  <label for="tab1">Optimiser</label>
+<!-- ===================== -->
+<!-- SECTION OPTIMISER -->
+<!-- ===================== -->
 
-  <input type="radio" name="tab" id="tab2">
-  <label for="tab2">Convertir grille → déplacements</label>
+<h3>Optimiser une grille</h3>
 
-  <!-- ===================== -->
-  <!-- ONGLET 1 -->
-  <!-- ===================== -->
-  <div id="content1" class="tab-content">
+<img src="queen.jpg" id="img-left" alt="queen">
 
-    <h3>Optimiser une grille</h3>
+<select id="mode">
+  <option value="diffRC">+ (lignes/colonnes)</option>
+  <option value="diffDiag">+x (lignes/colonnes/diagonales)</option>
+  <option value="balance">⚖️ Balance</option>
+</select>
 
-    <select id="mode">
-      <option value="diffRC">+ (lignes/colonnes)</option>
-      <option value="diffDiag">+x (diagonales)</option>
-      <option value="balance">⚖️ Balance</option>
-    </select>
+<br><br>
 
-    <br><br>
+<textarea id="input"></textarea>
+<textarea id="solution"></textarea>
 
-    <div class="container">
-      <textarea id="input"></textarea>
-      <textarea id="solution"></textarea>
-    </div>
+<br>
 
-    <br>
+<button id="runBtn" onclick="start()">Lancer</button>
 
-    <button id="runBtn" onclick="start()">Lancer</button>
+<div id="status"></div>
+<div id="score">Score: -</div>
 
-    <div id="status"></div>
-    <div id="score">Score: -</div>
+<hr>
 
-  </div>
+<!-- ===================== -->
+<!-- SECTION CONVERTIR -->
+<!-- ===================== -->
 
-  <!-- ===================== -->
-  <!-- ONGLET 2 -->
-  <!-- ===================== -->
-  <div id="content2" class="tab-content">
+<h3>Convertir grille → déplacements</h3>
 
-    <h3>Convertir grille → déplacements</h3>
+<textarea id="gridInput"
+placeholder="Collez ici la grille..."></textarea>
 
-    <textarea id="gridInput"
-      placeholder=" 73  29  32  74   9  33  77  10  34
-  4  43  81   3  42  80   2  41  79
- 31  75   8  30  76  25  35  61  18
- 72  28  67  23   1  40  78  11  39
-  5  44  70  26  49  62  19  48  51
- 55  22   7  54  68  24  36  60  17
- 71  27  66  63  13  58  50  12  38
-  6  45  69  21  46  53  20  47  52
- 56  64  14  57  65  15  37  59  16">
-    </textarea>
+<button onclick="convertGrid()">Convertir</button>
 
-    <br><br>
+<br><br>
 
-    <button onclick="convertGrid()">Convertir</button>
+<textarea id="movesOutput"
+placeholder="Résultat..."></textarea>
 
-    <br><br>
-
-    <textarea id="movesOutput"
-      placeholder="Résultat..."></textarea>
-
-  </div>
- </div>
 </div>
 
 <script>
 
-// =====================
-// WORKER OPTIMISATION
-// =====================
+/* ===== Worker optimisation ===== */
 
 let worker;
 
 function start() {
 
-    if (worker) worker.terminate();
+  if (worker) worker.terminate();
 
-    const btn = document.getElementById("runBtn");
-    btn.classList.remove("valid");
+  let solution = document.getElementById("input").value;
 
-    let solution = document.getElementById("input").value;
+  worker = new Worker("worker_dynamic.js");
 
-    worker = new Worker("worker_dynamic.js");
+  worker.onmessage = (e) => {
 
-    worker.onmessage = (e) => {
+    const data = e.data;
 
-        const data = e.data;
+    if (data.type === "init_ok") {
+      document.getElementById("status").textContent = "✅ Valide";
+      return;
+    }
 
-        if (data.type === "init_ok") {
-            document.getElementById("status").textContent = "✅ Valide";
-            document.getElementById("runBtn").classList.add("valid");
-            return;
-        }
+    if (data.type === "init_error") {
+      document.getElementById("status").textContent =
+        "❌ " + data.message;
+      return;
+    }
 
-        if (data.type === "init_error") {
-            document.getElementById("status").textContent = "❌ " + data.message;
-            return;
-        }
+    document.getElementById("solution").textContent =
+      data.solution;
 
-        document.getElementById("solution").textContent = data.solution;
-        document.getElementById("score").textContent =
-            `Score: ${data.score} | + ${data.diffRC} | +x ${data.diffDiag} | ⚖️ ${data.balance}`;
-    };
+    document.getElementById("score").textContent =
+      `Score: ${data.score} | + ${data.diffRC} | +x ${data.diffDiag} | ⚖️ ${data.balance}`;
+  };
 
-    const mode = document.getElementById("mode").value;
-    worker.postMessage({ solution, mode });
+  const mode = document.getElementById("mode").value;
+  worker.postMessage({ solution, mode });
 }
 
-// =====================
-// CONVERSION GRILLE → DÉPLACEMENTS
-// =====================
+
+/* ===== Conversion ===== */
 
 function convertGrid() {
 
-    const input = document.getElementById("gridInput").value;
+  const input = document.getElementById("gridInput").value;
 
-    if (!input.trim()) {
-        alert("Veuillez coller une grille.");
-        return;
+  if (!input.trim()) {
+    alert("Veuillez coller une grille.");
+    return;
+  }
+
+  const moves = [
+    [3,0],[2,2],[0,3],[-2,2],
+    [-3,0],[-2,-2],[0,-3],[2,-2]
+  ];
+
+  let cleaned = input
+    .replace(/\n/g," ")
+    .replace(/\s+/g," ")
+    .trim();
+
+  let values = cleaned.split(" ");
+  let size = values.length;
+  let n = Math.sqrt(size);
+
+  if (!Number.isInteger(n)) {
+    document.getElementById("movesOutput").value =
+      "❌ Grille non carrée.";
+    return;
+  }
+
+  let grid = [];
+  for (let i=0;i<n;i++) {
+    grid[i] = values.slice(i*n,(i+1)*n);
+  }
+
+  let positions = {};
+  let startPosition = null;
+
+  for (let i=0;i<n;i++) {
+    for (let j=0;j<n;j++) {
+      let k = parseInt(grid[i][j]);
+      positions[k] = [i,j];
+      if (k===1) startPosition = `${i},${j}`;
     }
+  }
 
-    const moves = [
-        [3,0],[2,2],[0,3],[-2,2],
-        [-3,0],[-2,-2],[0,-3],[2,-2]
-    ];
+  if (!startPosition) {
+    document.getElementById("movesOutput").value =
+      "❌ Position 1 introuvable.";
+    return;
+  }
 
-    let cleaned = input
-        .replace(/\n/g," ")
-        .replace(/\s+/g," ")
-        .trim();
+  let sequence = "";
+  let errors = [];
 
-    let values = cleaned.split(" ");
-    let size = values.length;
-    let n = Math.sqrt(size);
+  for (let k=1;k<n*n;k++) {
 
-    if (!Number.isInteger(n)) {
-        document.getElementById("movesOutput").value =
-            "❌ Grille non carrée.";
-        return;
-    }
+    let [r1,c1] = positions[k];
+    let [r2,c2] = positions[k+1] || positions[1];
 
-    let grid = [];
-    for (let i=0;i<n;i++) {
-        grid[i] = values.slice(i*n,(i+1)*n);
-    }
+    let dr = r2-r1;
+    let dc = c2-c1;
 
-    let positions = {};
-    let startPosition = null;
+    let idx = moves.findIndex(
+      m=>m[0]===dr && m[1]===dc
+    );
 
-    for (let i=0;i<n;i++) {
-        for (let j=0;j<n;j++) {
-            let k = parseInt(grid[i][j]);
-            positions[k] = [i,j];
-            if (k===1) startPosition = `${i},${j}`;
-        }
-    }
+    if (idx===-1)
+      errors.push(`Erreur entre ${k} et ${k+1}`);
+    else
+      sequence += idx;
+  }
 
-    if (!startPosition) {
-        document.getElementById("movesOutput").value =
-            "❌ Position 1 introuvable.";
-        return;
-    }
-
-    let sequence = "";
-    let errors = [];
-
-    for (let k=1;k<n*n;k++) {
-
-        let [r1,c1] = positions[k];
-        let [r2,c2] = positions[k+1] || positions[1];
-
-        let dr = r2-r1;
-        let dc = c2-c1;
-
-        let idx = moves.findIndex(m=>m[0]===dr && m[1]===dc);
-
-        if (idx===-1)
-            errors.push(`Erreur entre ${k} et ${k+1}`);
-        else
-            sequence += idx;
-    }
-
-    if (errors.length>0) {
-        document.getElementById("movesOutput").value =
-            "⚠️ Erreurs détectées:\n"+errors.join("\n");
-    } else {
-        document.getElementById("movesOutput").value =
-            `python p1.py ${n} ${startPosition} ${sequence}`;
-    }
+  if (errors.length>0) {
+    document.getElementById("movesOutput").value =
+      "⚠️ Erreurs:\n"+errors.join("\n");
+  } else {
+    document.getElementById("movesOutput").value =
+      `python p1.py ${n} ${startPosition} ${sequence}`;
+  }
 }
 
 </script>
