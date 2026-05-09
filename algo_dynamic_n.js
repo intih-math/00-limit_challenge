@@ -67,6 +67,13 @@ function init(Nval, text) {
     bestScore = computeScore();
 }
 
+function posOf(v) {
+    let index = pos[v];          // position linéaire dans la grille
+    let x = (index / N) | 0;     // ligne
+    let y = index % N;           // colonne
+    return [x, y];
+}
+
 function buildGridFromMoves(N, start, moves) {
     let grid = new Uint16Array(N * N);
 
