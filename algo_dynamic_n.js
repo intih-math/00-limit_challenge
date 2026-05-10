@@ -379,7 +379,7 @@ function step(iter = 500) {
         diffRC: full.diffRC,
         diffDiag: full.diffDiag,
         balance: full.balance,
-        solution: exportSolution()
+        solution: null
     };
 }
 
