@@ -343,6 +343,28 @@ function exploreTwoLevels() {
     return false;
 }
 
+function exportSolution() {
+
+    let result = [];
+
+    for (let v = 1; v < SIZE; v++) {
+
+        let [x1, y1] = posOf(v);
+        let [x2, y2] = posOf(v + 1);
+
+        let dx = x2 - x1;
+        let dy = y2 - y1;
+
+        for (let i = 0; i < DIRS.length; i++) {
+            if (DIRS[i][0] === dx && DIRS[i][1] === dy) {
+                result.push(i);
+                break;
+            }
+        }
+    }
+
+    return result.join("");
+}
 // =========================
 // 🔄 STEP PRINCIPAL
 // =========================
@@ -379,7 +401,7 @@ function step(iter = 500) {
         diffRC: full.diffRC,
         diffDiag: full.diffDiag,
         balance: full.balance,
-        solution: null
+        solution: exportSolution()
     };
 }
 
