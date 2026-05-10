@@ -83,8 +83,8 @@ function wrap([x, y], [dx, dy]) {
     const nx = x + dx;
     const ny = y + dy;
 
-    if (nx < 0 || nx >= N) return null;
-    if (ny < 0 || ny >= N) return null;
+    if (nx < 0 || nx >= N) return [-1, -1];
+    if (ny < 0 || ny >= N) return [-1, -1];
 
     return [nx, ny];
 }
