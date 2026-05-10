@@ -91,7 +91,6 @@ function wrap([x, y], [dx, dy]) {
 
 function buildGridFromMoves(N, start, moves) {
     let grid = new Uint16Array(N * N);
-s
     let [x, y] = start.split(",").map(Number);
 
     let current = 1;
