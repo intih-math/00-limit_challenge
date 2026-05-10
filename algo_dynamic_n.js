@@ -74,6 +74,10 @@ function posOf(v) {
     return [x, y];
 }
 
+function getVal(x, y) {
+    return grid[x * N + y];
+}
+
 function wrap([x, y], [dx, dy]) {
 
     const nx = x + dx;
