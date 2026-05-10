@@ -259,7 +259,7 @@ function computeFullScoreFromFlat() {
         balanceY += weights[i] * sumsRow[i];
     }
 
-    let balance = Math.min(Math.abs(balanceX), Math.abs(balanceY));
+    let balance = Math.max(Math.abs(balanceX), Math.abs(balanceY));
 
     return { diffRC, diffDiag, balance };
 }
