@@ -91,7 +91,7 @@ function wrap([x, y], [dx, dy]) {
 
 function buildGridFromMoves(N, start, moves) {
     let grid = new Uint16Array(N * N);
-
+s
     let [x, y] = start.split(",").map(Number);
 
     let current = 1;
@@ -157,7 +157,7 @@ function parallel() {
             let pos3 = wrap(pos1, dk);
             let val3 = getVal(pos3);
 
-            if (!same(pos3, pos2)) {
+            if (pos3[0] !== pos2[0] || pos3[1] !== pos2[1]) {
                 let pos4 = wrap(pos3, d);
                 let val4 = getVal(pos4);
 
