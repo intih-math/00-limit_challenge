@@ -3,6 +3,7 @@
 // =========================
 
 let N, SIZE;
+let startPositionStr = ""; // Mémorise la position de départ "x,y" pour l'export
 
 let grid, pos;
 let rowSum, colSum;
@@ -41,7 +42,10 @@ function init(Nval, text) {
         throw "Format invalide";
     }
 
-    self.mode = parts[2];
+    // On stocke la position de départ d'origine pour l'export final
+    startPositionStr = parts[1];
+
+    self.mode = parts[2]; // Temporaire si écrasé par le postMessage du worker
 
     let values = buildGridFromMoves(N, parts[1], parts[2]);
 
@@ -78,8 +82,14 @@ function getVal(x, y) {
     return grid[x * N + y];
 }
 
-function wrap([x, y], [dx, dy]) {
+// 🟢 AJOUT DE LA FONCTION MANQUANTE setVal
+function setVal(x, y, val) {
+    const idx = x * N + y;
+    grid[idx] = val;
+    pos[val] = idx;
+}
 
+function wrap([x, y], [dx, dy]) {
     const nx = x + dx;
     const ny = y + dy;
 
@@ -109,6 +119,7 @@ function buildGridFromMoves(N, start, moves) {
 
     return Array.from(grid);
 }
+
 // =========================
 // 🔁 Snapshot
 // =========================
@@ -118,7 +129,10 @@ function snapshot() {
         grid: grid.slice(),
         pos: pos.slice(),
         rowSum: rowSum.slice(),
-        colSum: colSum.slice()
+        colSum: colSum.slice(),
+        val1: self.val1,
+        val3: self.val3,
+        kd: self.kd
     };
 }
 
@@ -127,10 +141,11 @@ function restoreSnapshot(s) {
     pos.set(s.pos);
     rowSum.set(s.rowSum);
     colSum.set(s.colSum);
+    self.val1 = s.val1;
+    self.val3 = s.val3;
+    self.kd = s.kd;
 }
-// =========================
-// OPTIM base function
-// =========================
+
 // =========================
 // 🔍 Détection parallélogramme
 // =========================
@@ -154,19 +169,22 @@ function parallel() {
             let dk = DIRS[k];
 
             let pos3 = wrap(pos1, dk);
-            let val3 = getVal(pos3);
+            if (pos3[0] !== -1) { // Éviter les sorties de grille hors-limite
+                let val3 = getVal(pos3[0], pos3[1]);
 
-            if (pos3[0] !== pos2[0] || pos3[1] !== pos2[1]) {
-                let pos4 = wrap(pos3, d);
-                let val4 = getVal(pos4);
+                if (pos3[0] !== pos2[0] || pos3[1] !== pos2[1]) {
+                    let pos4 = wrap(pos3, d);
+                    if (pos4[0] !== -1) {
+                        let val4 = getVal(pos4[0], pos4[1]);
 
-                if (val4 === val3 + 1 && val4 > self.val1 + 2) {
-                    self.val3 = val3;
-                    self.dk = k;
-                    found = true;
+                        if (val4 === val3 + 1 && val4 > self.val1 + 2) {
+                            self.val3 = val3;
+                            self.dk = k;
+                            found = true;
+                        }
+                    }
                 }
             }
-
             k++;
         }
 
@@ -185,12 +203,10 @@ function parallel() {
 // =========================
 // 🔁 Altern (géométrique)
 // =========================
-
 function altern() {
     let first = self.val1;
 
     if (first !== 0 && self.val3 > first) {
-
         let positions = [];
 
         for (let v = self.val3; v > first; v--) {
@@ -201,12 +217,11 @@ function altern() {
 
         for (let i = 0; i < positions.length; i++) {
             let [x, y] = positions[i];
-            setVal(x, y, newVal);
+            setVal(x, y, newVal); // Fonctionne maintenant correctement !
             newVal++;
         }
     }
 }
-
 
 // =========================
 // ⚡ SCORE
@@ -263,11 +278,11 @@ function computeFullScoreFromFlat() {
 
     return { diffRC, diffDiag, balance };
 }
+
 // =========================
 // 🔄 Recompute complet sums
 // =========================
 function recomputeSums() {
-
     rowSum.fill(0);
     colSum.fill(0);
 
@@ -283,7 +298,6 @@ function recomputeSums() {
 }
 
 function computeScore() {
-
     const full = computeFullScoreFromFlat();
 
     if (self.mode === "diffDiag") return full.diffDiag;
@@ -295,22 +309,21 @@ function computeScore() {
 // =========================
 // 🔍 Recherche 2 niveaux
 // =========================
-
 function exploreTwoLevels() {
-
     const baseScore = computeScore();
     let bestLocal = baseScore;
     let bestState = null;
 
+    // Pour que l'exploration à 2 niveaux fonctionne, on doit forcer l'avancement 
+    // de l'état de recherche (val1) à chaque itération.
     for (let i = 0; i < DIRS.length; i++) {
 
         let before1 = snapshot();
 
+        // On fait avancer la recherche d'une permutation
         parallel();
         altern();
         recomputeSums();
-
-        let score1 = computeScore();
 
         for (let j = 0; j < DIRS.length; j++) {
 
@@ -331,6 +344,9 @@ function exploreTwoLevels() {
         }
 
         restoreSnapshot(before1);
+        
+        // On force val1 à s'incrémenter pour tester d'autres zones de la grille au tour suivant
+        self.val1 = (self.val1 % (SIZE - 1)) + 1;
     }
 
     if (bestState && bestLocal < baseScore) {
@@ -343,32 +359,47 @@ function exploreTwoLevels() {
     return false;
 }
 
+// 🟢 EXPORTATION CORRIGÉE : Incorpore N et la position de départ de la valeur 1
 function exportSolution() {
-
     let result = [];
+    
+    // Retrouver la coordonnée dynamique de 1 si elle a bougé,
+    // sinon utiliser la coordonnée de départ stockée à l'initialisation.
+    let startPos = startPositionStr;
+    if (pos[1] !== undefined) {
+        let startRow = (pos[1] / N) | 0;
+        let startCol = pos[1] % N;
+        startPos = `${startRow},${startCol}`;
+    }
 
     for (let v = 1; v < SIZE; v++) {
-
         let [x1, y1] = posOf(v);
         let [x2, y2] = posOf(v + 1);
 
         let dx = x2 - x1;
         let dy = y2 - y1;
 
+        let matched = false;
         for (let i = 0; i < DIRS.length; i++) {
             if (DIRS[i][0] === dx && DIRS[i][1] === dy) {
                 result.push(i);
+                matched = true;
                 break;
             }
         }
+        
+        // Sécurité si un saut n'est pas un saut de cavalier/reine valide suite à une erreur
+        if (!matched) {
+            result.push("?"); 
+        }
     }
 
-    return result.join("");
+    return `${N} ${startPos} ${result.join("")}`;
 }
+
 // =========================
 // 🔄 STEP PRINCIPAL
 // =========================
-
 function step(iter = 500) {
 
     for (let i = 0; i < iter; i++) {
@@ -382,13 +413,10 @@ function step(iter = 500) {
         let after = computeScore();
 
         if (after > before) {
-
             let improved = exploreTwoLevels();
-
             if (!improved) {
                 bestScore = after;
             }
-
         } else {
             bestScore = after;
         }
@@ -403,24 +431,4 @@ function step(iter = 500) {
         balance: full.balance,
         solution: exportSolution()
     };
-}
-
-// =========================
-// ⚡ UTILITAIRES EXISTANTS
-// =========================
-
-function recomputeSums() {
-
-    rowSum.fill(0);
-    colSum.fill(0);
-
-    for (let i = 0; i < SIZE; i++) {
-        let v = grid[i];
-
-        let x = (i / N) | 0;
-        let y = i % N;
-
-        rowSum[x] += v;
-        colSum[y] += v;
-    }
 }
