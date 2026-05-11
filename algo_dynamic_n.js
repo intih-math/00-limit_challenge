@@ -332,31 +332,51 @@ function exploreTwoLevels() {
     let bestLocal = baseScore;
     let bestState = null;
 
+    
     for (let i = 0; i < DIRS.length; i++) {
+        let improve = 0;
         let before1 = snapshot();
+        let countDown = 2000;
 
         parallel();
         altern();
         recomputeSums();
 
-        for (let j = 0; j < DIRS.length; j++) {
-            let before2 = snapshot();
+        let score1 = computeScore();
 
-            parallel();
-            altern();
-            recomputeSums();
-
-            let score2 = computeScore();
-
-            if (score2 < bestLocal) {
-                bestLocal = score2;
-                bestState = snapshot();
+        if (score1 >= baseScore) {
+            if (countDown > 0) {
+                countDown--;
             }
-
-            restoreSnapshot(before2);
+            else {
+              for (let j = 0; j < DIRS.length; j++) {
+                  let before2 = snapshot();
+    
+                  parallel();
+                  altern();
+                  recomputeSums();
+    
+                  let score2 = computeScore();
+                  
+                  if (score2 < bestLocal) {
+                      bestLocal = score2;
+                      bestState = snapshot();
+                  }
+    
+                  restoreSnapshot(before2);
+              }
+            }
+        }
+        else {
+            improve = 1;
+            countDown = 2000;
+            bestLocal = score1;
+            bestState = snapshot();
         }
 
-        restoreSnapshot(before1);
+        if (improve === 0) {
+            restoreSnapshot(before1);
+        }
         self.val1 = (self.val1 % (SIZE - 1)) + 1;
     }
 
