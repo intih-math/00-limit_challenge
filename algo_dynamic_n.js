@@ -336,7 +336,7 @@ function exploreTwoLevels() {
     for (let i = 0; i < DIRS.length; i++) {
         let improve = 0;
         let before1 = snapshot();
-        let countDown = 2000;
+        let countDown = 300;
 
         parallel();
         altern();
@@ -369,7 +369,7 @@ function exploreTwoLevels() {
         }
         else {
             improve = 1;
-            countDown = 2000;
+            countDown = 300;
             bestLocal = score1;
             bestState = snapshot();
         }
