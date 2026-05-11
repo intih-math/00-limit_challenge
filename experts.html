@@ -208,11 +208,11 @@ function start() {
   if (worker) worker.terminate();
 
   let solution = document.getElementById("input").value;
+  const mode = document.getElementById("mode").value;
 
   worker = new Worker("worker_dynamic.js");
 
   worker.onmessage = (e) => {
-
     const data = e.data;
 
     if (data.type === "init_ok") {
@@ -222,22 +222,20 @@ function start() {
     }
 
     if (data.type === "init_error") {
-      document.getElementById("status").textContent =
-        "❌ " + data.message;
+      document.getElementById("status").textContent = "❌ " + data.message;
       return;
     }
 
-    document.getElementById("solution").textContent =
-      data.solution;
+    // Met à jour la zone "Solution..." avec le format correct "N pos_dep deplacements"
+    document.getElementById("solution").value = data.solution;
 
     document.getElementById("score").textContent =
       `Score: ${data.score} | + ${data.diffRC} | +x ${data.diffDiag} | ⚖️ ${data.balance}`;
   };
 
-  const mode = document.getElementById("mode").value;
+  // On envoie la solution et le mode sélectionné
   worker.postMessage({ solution, mode });
 }
-
 
 /* ===========================
    CONVERSION
