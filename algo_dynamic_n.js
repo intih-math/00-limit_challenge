@@ -42,6 +42,23 @@ const DIRS = [
   [-3,0],[-2,-2],[0,-3],[2,-2]
 ];
 
+/**
+ * Affiche la grille actuelle dans la console sous forme de matrice
+ */
+function debugPrintGrid() {
+    console.log("--- État de la Grille ---");
+    for (let i = 0; i < N; i++) {
+        let row = "";
+        for (let j = 0; j < N; j++) {
+            // grid[i * N + j] récupère la valeur à la ligne i, colonne j
+            let val = grid[i * N + j];
+            row += val.toString().padStart(4, " ") + " ";
+        }
+        console.log(row);
+    }
+    console.log("-------------------------");
+}
+
 // =========================
 // 🧱 INIT
 // =========================
@@ -438,6 +455,7 @@ function step(iter = 500) {
         parallel();
         altern();
         recomputeSums();
+        debugPrintGrid();
 
         // Si on améliore le critère principal historique global, on met à jour le record
         const currentPrimary = computePrimaryScore();
