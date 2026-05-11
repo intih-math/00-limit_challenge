@@ -3,14 +3,19 @@
 // =========================
 
 let N, SIZE;
-let startPositionStr = ""; // Mémorise la position de départ "x,y" pour l'export
+let startPositionStr = ""; 
 
 let grid, pos;
 let rowSum, colSum;
 
 let bestScore;
 
-// 🟢 SAUVEGARDE DU MEILLEUR ÉTAT ABSOLU (RECORD)
+// GESTION DU TEMPS (LIMITE 6 MINUTES)
+let startTime = 0;
+const TIME_LIMIT_MS = 6 * 60 * 1000; 
+let isTimeOver = false;
+
+// SAUVEGARDE DU MEILLEUR ÉTAT ABSOLU
 let globalBest = {
     score: Infinity,
     diffRC: Infinity,
@@ -24,7 +29,8 @@ self.val1 = 1;
 self.val3 = 0;
 self.kd   = 0;
 
-self.mode = "diffRC";
+self.mode = "diffRC";          // Mode principal demandé par l'IHM
+let activeMode = "diffRC";     // Mode réellement évalué à l'instant t (peut être le secondaire)
 
 // directions fixes
 const DIRS = [
@@ -37,9 +43,11 @@ const DIRS = [
 // =========================
 
 function init(Nval, text) {
-
     N = Nval;
     SIZE = N * N;
+
+    startTime = performance.now(); 
+    isTimeOver = false;
 
     grid = new Uint16Array(SIZE);
     pos  = new Uint16Array(SIZE + 1);
@@ -53,7 +61,8 @@ function init(Nval, text) {
     }
 
     startPositionStr = parts[1];
-    self.mode = "diffRC"; // Sera surchargé par le message du worker si nécessaire
+    self.mode = "diffRC"; 
+    activeMode = self.mode;
 
     let values = buildGridFromMoves(N, parts[1], parts[2]);
 
@@ -78,7 +87,6 @@ function init(Nval, text) {
 
     bestScore = computeScore();
     
-    // Initialiser le record global avec l'état de départ
     const full = computeFullScoreFromFlat();
     globalBest = {
         score: bestScore,
@@ -139,7 +147,7 @@ function buildGridFromMoves(N, start, moves) {
 }
 
 // =========================
-// 🔁 Snapshot
+// 🔁 Snapshot & Comparaison
 // =========================
 
 function snapshot() {
@@ -162,6 +170,14 @@ function restoreSnapshot(s) {
     self.val1 = s.val1;
     self.val3 = s.val3;
     self.kd = s.kd;
+}
+
+// Vérifie si deux grilles sont parfaitement identiques (pour détecter le rebouclage)
+function areGridsEqual(gridA, gridB) {
+    for (let i = 0; i < gridA.length; i++) {
+        if (gridA[i] !== gridB[i]) return false;
+    }
+    return true;
 }
 
 // =========================
@@ -297,9 +313,6 @@ function computeFullScoreFromFlat() {
     return { diffRC, diffDiag, balance };
 }
 
-// =========================
-// 🔄 Recompute complet sums
-// =========================
 function recomputeSums() {
     rowSum.fill(0);
     colSum.fill(0);
@@ -315,82 +328,36 @@ function recomputeSums() {
     }
 }
 
+// Évalue le score basé sur le mode "actif" à cet instant
 function computeScore() {
     const full = computeFullScoreFromFlat();
 
-    if (self.mode === "diffDiag") return full.diffDiag;
-    if (self.mode === "balance") return full.balance;
+    if (activeMode === "diffDiag") return full.diffDiag;
+    if (activeMode === "balance") return full.balance;
 
     return full.diffRC;
 }
 
-// =========================
-// 🔍 Recherche 2 niveaux
-// =========================
-function exploreTwoLevels() {
-    const baseScore = computeScore();
-    let bestLocal = baseScore;
-    let bestState = null;
-
-    
-    for (let i = 0; i < DIRS.length; i++) {
-        let improve = 0;
-        let before1 = snapshot();
-        let countDown = 300;
-
-        parallel();
-        altern();
-        recomputeSums();
-
-        let score1 = computeScore();
-
-        if (score1 >= baseScore) {
-            if (countDown > 0) {
-                countDown--;
-            }
-            else {
-              for (let j = 0; j < DIRS.length; j++) {
-                  let before2 = snapshot();
-    
-                  parallel();
-                  altern();
-                  recomputeSums();
-    
-                  let score2 = computeScore();
-                  
-                  if (score2 < bestLocal) {
-                      bestLocal = score2;
-                      bestState = snapshot();
-                  }
-    
-                  restoreSnapshot(before2);
-              }
-            }
-        }
-        else {
-            improve = 1;
-            countDown = 300;
-            bestLocal = score1;
-            bestState = snapshot();
-        }
-
-        if (improve === 0) {
-            restoreSnapshot(before1);
-        }
-        self.val1 = (self.val1 % (SIZE - 1)) + 1;
-    }
-
-    if (bestState && bestLocal < baseScore) {
-        restoreSnapshot(bestState);
-        recomputeSums();
-        bestScore = bestLocal;
-        return true;
-    }
-
-    return false;
+// Récupère la valeur du critère principal de sélection
+function computePrimaryScore() {
+    const full = computeFullScoreFromFlat();
+    if (self.mode === "diffDiag") return full.diffDiag;
+    if (self.mode === "balance") return full.balance;
+    return full.diffRC;
 }
 
-// 🟢 EXPORTATION ADAPTÉE À UNE GRILLE SPÉCIFIQUE
+function checkTime() {
+    if (isTimeOver) return true;
+    const elapsed = performance.now() - startTime;
+    if (elapsed >= TIME_LIMIT_MS) {
+        isTimeOver = true;
+    }
+    return isTimeOver;
+}
+
+// =========================
+// 🔄 EXPORT DE LA SOLUTION
+// =========================
 function exportSolutionFromGrid(targetGrid, targetPos) {
     let result = [];
     
@@ -427,59 +394,119 @@ function exportSolutionFromGrid(targetGrid, targetPos) {
     return `${N} ${startPos} ${result.join("")}`;
 }
 
-// =========================
-// 🔄 STEP PRINCIPAL
-// =========================
+
+// ===================================
+// 🔄 ALGORITHME PRINCIPAL + SECONDAIRE
+// ===================================
+
+let forceStop = false; // Permet de stopper définitivement le worker si l'optimisation secondaire échoue
+
 function step(iter = 500) {
 
+    if (checkTime() || forceStop) {
+        return buildStepResult(true);
+    }
+
+    // On mémorise la grille de départ de cette itération pour détecter le rebouclage
+    let loopStartGrid = grid.slice();
+    let looped = false;
+
+    // Détermination du critère secondaire temporaire
+    let secondaryMode = "diffRC";
+    if (self.mode === "diffRC") {
+        secondaryMode = "balance";
+    } else if (self.mode === "balance") {
+        secondaryMode = "diffRC";
+    } else if (self.mode === "diffDiag") {
+        secondaryMode = "diffRC";
+    }
+
+    activeMode = self.mode; // On commence par bosser sur le mode principal
+
     for (let i = 0; i < iter; i++) {
+        if (i % 50 === 0 && checkTime()) break;
 
-        let before = computeScore();
-
+        // Étape d'exploration classique
         parallel();
         altern();
         recomputeSums();
 
-        let after = computeScore();
-
-        if (after > before) {
-            let improved = exploreTwoLevels();
-            if (!improved) {
-                bestScore = after;
-            }
-        } else {
-            bestScore = after;
-        }
-
-        // 🟢 TEST DE RECORD À CHAQUE MICRO-ÉTAPE
-        const currentScore = computeScore();
-        if (currentScore < globalBest.score) {
+        // Si on améliore le critère principal historique global, on met à jour le record
+        const currentPrimary = computePrimaryScore();
+        if (currentPrimary < globalBest.score) {
             const full = computeFullScoreFromFlat();
             globalBest = {
-                score: currentScore,
+                score: currentPrimary,
                 diffRC: full.diffRC,
                 diffDiag: full.diffDiag,
                 balance: full.balance,
                 grid: grid.slice(),
                 pos: pos.slice()
             };
+            // Comme on a trouvé une vraie amélioration globale, on redéfinit notre point d'ancrage anti-boucle
+            loopStartGrid = grid.slice();
+        }
+
+        // Détection de rebouclage sur la grille de départ de la phase
+        if (areGridsEqual(grid, loopStartGrid)) {
+            looped = true;
+            break; 
         }
     }
 
-    const currentFull = computeFullScoreFromFlat();
-    const currentScore = computeScore();
+    // 🚨 REBOUCLAGE DÉTECTÉ : Lancement de l'optimisation secondaire temporaire
+    if (looped && !checkTime()) {
+        activeMode = secondaryMode; // On bascule sur le critère secondaire
+        
+        let secondaryImprovementsCount = 0;
+        let lastSecondaryScore = computeScore();
 
-    // On renvoie d'un côté l'état courant qui bouge,
-    // et de l'autre le record absolu figé.
+        // On fait des tentatives d'améliorations secondaires (max 1000 micro-itérations pour en trouver 2)
+        for (let j = 0; j < 1000; j++) {
+            if (j % 50 === 0 && checkTime()) break;
+
+            parallel();
+            altern();
+            recomputeSums();
+
+            let currentSecondaryScore = computeScore();
+            if (currentSecondaryScore < lastSecondaryScore) {
+                secondaryImprovementsCount++;
+                lastSecondaryScore = currentSecondaryScore;
+
+                // Si on a amélioré le critère secondaire 2 fois, on s'arrête là pour cette phase
+                if (secondaryImprovementsCount === 2) {
+                    break;
+                }
+            }
+        }
+
+        // Si on n'a PAS réussi à l'améliorer au moins 2 fois, on arrête définitivement l'algorithme !
+        if (secondaryImprovementsCount < 2) {
+            forceStop = true;
+        } else {
+            // Si on a réussi, on repasse sur le mode principal pour le tour suivant
+            activeMode = self.mode;
+        }
+    }
+
+    return buildStepResult(checkTime() || forceStop);
+}
+
+// Fonction utilitaire pour packager le retour
+function buildStepResult(timeOrForceOver) {
+    const currentFull = computeFullScoreFromFlat();
+    const currentPrimary = computePrimaryScore();
+
     return {
-        // État courant (qui varie en direct)
+        timeOver: timeOrForceOver,
         current: {
-            score: currentScore,
+            score: currentPrimary,
             diffRC: currentFull.diffRC,
             diffDiag: currentFull.diffDiag,
-            balance: currentFull.balance
+            balance: currentFull.balance,
+            activeMode: activeMode
         },
-        // Meilleur état historique (figé)
         best: {
             score: globalBest.score,
             diffRC: globalBest.diffRC,
