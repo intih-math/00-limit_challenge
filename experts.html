@@ -216,12 +216,12 @@ function start() {
 
   worker = new Worker("worker_dynamic.js");
 
-  worker.onmessage = (e) => {
+worker.onmessage = (e) => {
 
     const data = e.data;
 
     if (data.type === "init_ok") {
-      document.getElementById("status").textContent = "✅ Valide";
+      document.getElementById("status").textContent = "✅ Recherche démarrée...";
       document.getElementById("runBtn").classList.add("valid");
       return;
     }
@@ -232,19 +232,31 @@ function start() {
       return;
     }
 
-    // 🟢 1. Écrire la meilleure solution trouvée jusqu'à présent (stable)
+    // Gestion de l'arrêt (temps dépassé ou échec de l'optimisation secondaire)
+    if (data.type === "finished" || data.timeOver) {
+      document.getElementById("status").textContent = "⏱️ Recherche stoppée (limite atteinte ou aucun rebond trouvé).";
+      document.getElementById("runBtn").classList.remove("valid");
+      return;
+    }
+
+    // Mise à jour de la meilleure solution
     document.getElementById("solution").value = data.best.solution;
 
-    // 🟢 2. Affichage double des scores :
-    // - À gauche : Les scores figés de la meilleure grille à ce jour.
-    // - À droite : Le score de l'état actuellement exploré (qui varie).
+    // Traduction lisible du mode actif actuel
+    let modeLabel = data.current.activeMode;
+    if (data.current.activeMode === "diffRC") modeLabel = "Lignes/Colonnes (+)";
+    if (data.current.activeMode === "diffDiag") modeLabel = "Lignes/Col/Diagonales (+x)";
+    if (data.current.activeMode === "balance") modeLabel = "Balance (⚖️)";
+
+    // Affichage des scores
     document.getElementById("score").innerHTML = `
-      <strong>Meilleur :</strong> Score: ${data.best.score} | + ${data.best.diffRC} | +x ${data.best.diffDiag} | ⚖️ ${data.best.balance} 
+      <strong>Meilleur absolu :</strong> Score: ${data.best.score} | + ${data.best.diffRC} | +x ${data.best.diffDiag} | ⚖️ ${data.best.balance} 
       <br>
-      <span style="color: #444; font-size: 0.9em;">(Exploration en cours : ${data.current.score})</span>
+      <span style="color: #444; font-size: 0.9em;">
+        (Exploration en cours sur le critère <strong>${modeLabel}</strong> : ${data.current.score})
+      </span>
     `;
   };
-
   worker.postMessage({ solution, mode });
 }
 /* ===========================
