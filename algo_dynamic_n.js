@@ -10,6 +10,10 @@ let rowSum, colSum;
 
 let bestScore;
 
+let anchorVal1 = -1;
+let anchorVal3 = -1;
+let isPerturbing = false;
+
 // GESTION DU TEMPS (LIMITE 6 MINUTES)
 let startTime = 0;
 const TIME_LIMIT_MS = 6 * 60 * 1000; 
@@ -500,7 +504,60 @@ function step(iter = 500) {
 // Fonction utilitaire pour packager le retour
 function buildStepResult(timeOrForceOver) {
     const currentFull = computeFullScoreFromFlat();
-    const currentPrimary = computePrimaryScore();
+  function step(iter = 2000) {
+    for (let i = 0; i < iter; i++) {
+        // 1. Trouver la prochaine transformation candidate
+        parallel(); // Cette fonction met à jour self.val1 et self.val3
+
+        // 2. Détection de la boucle
+        if (self.val1 === anchorVal1 && self.val3 === anchorVal3) {
+            // On a fait le tour complet sans amélioration
+            console.log("Boucle détectée ! Passage au critère de perturbation.");
+            isPerturbing = true;
+            basculerCritere(); // Fonction pour changer le mode d'optimisation
+        }
+
+        let scoreBefore = computeScore();
+        
+        // 3. Appliquer la transformation
+        altern();
+        recomputeSums();
+        
+        let scoreAfter = computeScore();
+
+        // 4. Évaluation du résultat
+        if (scoreAfter < scoreBefore) { 
+            // AMÉLIORATION TROUVÉE
+            anchorVal1 = -1; // On réinitialise l'ancre car le paysage a changé
+            anchorVal3 = -1;
+            
+            if (isPerturbing) {
+                console.log("Amélioration trouvée via perturbation. Retour au mode normal.");
+                isPerturbing = false;
+                restaurerCritereNormal();
+            }
+            
+            // Logique optionnelle de descente profonde (ex: exploreTwoLevels)
+            bestScore = scoreAfter;
+        } else {
+            // ÉCHEC DE LA TENTATIVE
+            // Si c'est le premier échec après un démarrage/amélioration, on fixe l'ancre
+            if (anchorVal1 === -1) {
+                anchorVal1 = self.val1;
+                anchorVal3 = self.val3;
+            }
+            
+            // Revenir à l'état précédent (Hill Climbing strict)
+            // Note: assurez-vous d'avoir une fonction undoAltern() ou de ré-exécuter altern()
+            altern(); 
+            recomputeSums();
+        }
+    }
+    
+    // ... reste du code de retour (postMessage)
+}
+
+const currentPrimary = computePrimaryScore();
 
     return {
         timeOver: timeOrForceOver,
