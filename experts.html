@@ -201,6 +201,10 @@ placeholder="Résultat..."></textarea>
    WORKER OPTIMISATION
 =========================== */
 
+/* ===========================
+   WORKER OPTIMISATION
+=========================== */
+
 let worker;
 
 function start() {
@@ -213,6 +217,7 @@ function start() {
   worker = new Worker("worker_dynamic.js");
 
   worker.onmessage = (e) => {
+
     const data = e.data;
 
     if (data.type === "init_ok") {
@@ -222,21 +227,26 @@ function start() {
     }
 
     if (data.type === "init_error") {
-      document.getElementById("status").textContent = "❌ " + data.message;
+      document.getElementById("status").textContent =
+        "❌ " + data.message;
       return;
     }
 
-    // Met à jour la zone "Solution..." avec le format correct "N pos_dep deplacements"
-    document.getElementById("solution").value = data.solution;
+    // 🟢 1. Écrire la meilleure solution trouvée jusqu'à présent (stable)
+    document.getElementById("solution").value = data.best.solution;
 
-    document.getElementById("score").textContent =
-      `Score: ${data.score} | + ${data.diffRC} | +x ${data.diffDiag} | ⚖️ ${data.balance}`;
+    // 🟢 2. Affichage double des scores :
+    // - À gauche : Les scores figés de la meilleure grille à ce jour.
+    // - À droite : Le score de l'état actuellement exploré (qui varie).
+    document.getElementById("score").innerHTML = `
+      <strong>Meilleur :</strong> Score: ${data.best.score} | + ${data.best.diffRC} | +x ${data.best.diffDiag} | ⚖️ ${data.best.balance} 
+      <br>
+      <span style="color: #444; font-size: 0.9em;">(Exploration en cours : ${data.current.score})</span>
+    `;
   };
 
-  // On envoie la solution et le mode sélectionné
   worker.postMessage({ solution, mode });
 }
-
 /* ===========================
    CONVERSION
 =========================== */
