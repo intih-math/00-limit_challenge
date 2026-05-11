@@ -136,8 +136,13 @@ function buildGridFromMoves(N, start, moves) {
         let m = parseInt(moves[i]);
         let [dx, dy] = DIRS[m];
 
-        x = (x + dx + N) % N;
-        y = (y + dy + N) % N;
+        x = x + dx;
+        y = y + dy;
+
+        // Sécurité de validation stricte (monde plat)
+        if (x < 0 || x >= N || y < 0 || y >= N) {
+            console.error(`Saut invalide détecté à l'étape ${i} : position [${x}, ${y}] hors-limite.`);
+        }
 
         current++;
         grid[x * N + y] = current;
@@ -145,7 +150,6 @@ function buildGridFromMoves(N, start, moves) {
 
     return Array.from(grid);
 }
-
 // =========================
 // 🔁 Snapshot & Comparaison
 // =========================
