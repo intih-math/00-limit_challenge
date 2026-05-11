@@ -10,6 +10,16 @@ let rowSum, colSum;
 
 let bestScore;
 
+// 🟢 SAUVEGARDE DU MEILLEUR ÉTAT ABSOLU (RECORD)
+let globalBest = {
+    score: Infinity,
+    diffRC: Infinity,
+    diffDiag: Infinity,
+    balance: Infinity,
+    grid: null,
+    pos: null
+};
+
 self.val1 = 1;
 self.val3 = 0;
 self.kd   = 0;
@@ -42,10 +52,8 @@ function init(Nval, text) {
         throw "Format invalide";
     }
 
-    // On stocke la position de départ d'origine pour l'export final
     startPositionStr = parts[1];
-
-    self.mode = parts[2]; // Temporaire si écrasé par le postMessage du worker
+    self.mode = "diffRC"; // Sera surchargé par le message du worker si nécessaire
 
     let values = buildGridFromMoves(N, parts[1], parts[2]);
 
@@ -69,12 +77,23 @@ function init(Nval, text) {
     }
 
     bestScore = computeScore();
+    
+    // Initialiser le record global avec l'état de départ
+    const full = computeFullScoreFromFlat();
+    globalBest = {
+        score: bestScore,
+        diffRC: full.diffRC,
+        diffDiag: full.diffDiag,
+        balance: full.balance,
+        grid: grid.slice(),
+        pos: pos.slice()
+    };
 }
 
 function posOf(v) {
-    let index = pos[v];          // position linéaire dans la grille
-    let x = (index / N) | 0;     // ligne
-    let y = index % N;           // colonne
+    let index = pos[v];
+    let x = (index / N) | 0;
+    let y = index % N;
     return [x, y];
 }
 
@@ -82,7 +101,6 @@ function getVal(x, y) {
     return grid[x * N + y];
 }
 
-// 🟢 AJOUT DE LA FONCTION MANQUANTE setVal
 function setVal(x, y, val) {
     const idx = x * N + y;
     grid[idx] = val;
@@ -169,7 +187,7 @@ function parallel() {
             let dk = DIRS[k];
 
             let pos3 = wrap(pos1, dk);
-            if (pos3[0] !== -1) { // Éviter les sorties de grille hors-limite
+            if (pos3[0] !== -1) {
                 let val3 = getVal(pos3[0], pos3[1]);
 
                 if (pos3[0] !== pos2[0] || pos3[1] !== pos2[1]) {
@@ -217,7 +235,7 @@ function altern() {
 
         for (let i = 0; i < positions.length; i++) {
             let [x, y] = positions[i];
-            setVal(x, y, newVal); // Fonctionne maintenant correctement !
+            setVal(x, y, newVal);
             newVal++;
         }
     }
@@ -314,19 +332,14 @@ function exploreTwoLevels() {
     let bestLocal = baseScore;
     let bestState = null;
 
-    // Pour que l'exploration à 2 niveaux fonctionne, on doit forcer l'avancement 
-    // de l'état de recherche (val1) à chaque itération.
     for (let i = 0; i < DIRS.length; i++) {
-
         let before1 = snapshot();
 
-        // On fait avancer la recherche d'une permutation
         parallel();
         altern();
         recomputeSums();
 
         for (let j = 0; j < DIRS.length; j++) {
-
             let before2 = snapshot();
 
             parallel();
@@ -344,8 +357,6 @@ function exploreTwoLevels() {
         }
 
         restoreSnapshot(before1);
-        
-        // On force val1 à s'incrémenter pour tester d'autres zones de la grille au tour suivant
         self.val1 = (self.val1 % (SIZE - 1)) + 1;
     }
 
@@ -359,22 +370,25 @@ function exploreTwoLevels() {
     return false;
 }
 
-// 🟢 EXPORTATION CORRIGÉE : Incorpore N et la position de départ de la valeur 1
-function exportSolution() {
+// 🟢 EXPORTATION ADAPTÉE À UNE GRILLE SPÉCIFIQUE
+function exportSolutionFromGrid(targetGrid, targetPos) {
     let result = [];
     
-    // Retrouver la coordonnée dynamique de 1 si elle a bougé,
-    // sinon utiliser la coordonnée de départ stockée à l'initialisation.
     let startPos = startPositionStr;
-    if (pos[1] !== undefined) {
-        let startRow = (pos[1] / N) | 0;
-        let startCol = pos[1] % N;
+    if (targetPos[1] !== undefined) {
+        let startRow = (targetPos[1] / N) | 0;
+        let startCol = targetPos[1] % N;
         startPos = `${startRow},${startCol}`;
     }
 
     for (let v = 1; v < SIZE; v++) {
-        let [x1, y1] = posOf(v);
-        let [x2, y2] = posOf(v + 1);
+        let index1 = targetPos[v];
+        let x1 = (index1 / N) | 0;
+        let y1 = index1 % N;
+
+        let index2 = targetPos[v + 1];
+        let x2 = (index2 / N) | 0;
+        let y2 = index2 % N;
 
         let dx = x2 - x1;
         let dy = y2 - y1;
@@ -387,11 +401,7 @@ function exportSolution() {
                 break;
             }
         }
-        
-        // Sécurité si un saut n'est pas un saut de cavalier/reine valide suite à une erreur
-        if (!matched) {
-            result.push("?"); 
-        }
+        if (!matched) result.push("?");
     }
 
     return `${N} ${startPos} ${result.join("")}`;
@@ -420,15 +430,42 @@ function step(iter = 500) {
         } else {
             bestScore = after;
         }
+
+        // 🟢 TEST DE RECORD À CHAQUE MICRO-ÉTAPE
+        const currentScore = computeScore();
+        if (currentScore < globalBest.score) {
+            const full = computeFullScoreFromFlat();
+            globalBest = {
+                score: currentScore,
+                diffRC: full.diffRC,
+                diffDiag: full.diffDiag,
+                balance: full.balance,
+                grid: grid.slice(),
+                pos: pos.slice()
+            };
+        }
     }
 
-    const full = computeFullScoreFromFlat();
+    const currentFull = computeFullScoreFromFlat();
+    const currentScore = computeScore();
 
+    // On renvoie d'un côté l'état courant qui bouge,
+    // et de l'autre le record absolu figé.
     return {
-        score: bestScore,
-        diffRC: full.diffRC,
-        diffDiag: full.diffDiag,
-        balance: full.balance,
-        solution: exportSolution()
+        // État courant (qui varie en direct)
+        current: {
+            score: currentScore,
+            diffRC: currentFull.diffRC,
+            diffDiag: currentFull.diffDiag,
+            balance: currentFull.balance
+        },
+        // Meilleur état historique (figé)
+        best: {
+            score: globalBest.score,
+            diffRC: globalBest.diffRC,
+            diffDiag: globalBest.diffDiag,
+            balance: globalBest.balance,
+            solution: exportSolutionFromGrid(globalBest.grid, globalBest.pos)
+        }
     };
 }
