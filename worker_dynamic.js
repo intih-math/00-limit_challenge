@@ -25,7 +25,9 @@ onmessage = function(e) {
         // 🔹 3. grille
         const gridText = parts[2];
 
-        init(N, solution.trim());
+        // On reconstruit le format attendu : "N x,y moves"
+        const formatted = `${parts[0]} ${parts[1]} ${parts[2]}`;
+        init(N, formatted);
 
         postMessage({ type: "init_ok" });
 
