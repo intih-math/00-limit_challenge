@@ -193,10 +193,8 @@ function snapshot() {
         grid: grid.slice(),
         pos: pos.slice(),
         rowSum: rowSum.slice(),
-        colSum: colSum.slice(),
-        val1: self.val1,
-        val3: self.val3,
-        kd: self.kd
+        colSum: colSum.slice()
+        // Note: on n'inclut plus val1, val3, kd pour éviter le sur-place au rollback
     };
 }
 
@@ -205,9 +203,6 @@ function restoreSnapshot(s) {
     pos.set(s.pos);
     rowSum.set(s.rowSum);
     colSum.set(s.colSum);
-    self.val1 = s.val1;
-    self.val3 = s.val3;
-    self.kd = s.kd;
 }
 
 // =========================================================================
@@ -216,7 +211,7 @@ function restoreSnapshot(s) {
 
 function parallel() {
     let found = false;
-    let reprise = true;
+    let resumption = true;
     let nbIter = 0;
     looped = false; 
 
@@ -228,8 +223,8 @@ function parallel() {
 
         let d = [pos2[0] - pos1[0], pos2[1] - pos1[1]];
 
-        let k = reprise ? self.kd + 1 : 0;
-        reprise = false;
+        let k = resumption ? self.kd + 1 : 0;
+        resumption = false;
 
         while (!found && k < DIRS.length) {
             let dk = DIRS[k];
@@ -272,6 +267,7 @@ function parallel() {
         self.kd = k;
 
         if (!found) {
+            self.kd = 0; // Réinitialise la direction pour le nouveau val1
             if (self.val1 < SIZE - 1) {
                 self.val1++;
             } else {
@@ -460,13 +456,11 @@ function buildStepResult(timeOrForceOver) {
 }
 
 // =========================================================================
-// 🔄 ALGORITHME PRINCIPAL (REFORMATÉ SANS DOUBLE DÉCLARATION)
+// 🔄 ALGORITHME PRINCIPAL REFORMATÉ (CORRIGÉ SANS ACCORDE ET SANS BLOCAGE)
 // =========================================================================
 
-let forceStop = false; 
-
-function step(iter = 500) { // On s'autorise un lot de 500 itérations par appel
-    if (checkTime() || forceStop) {
+function step(iter = 500) { 
+    if (checkTime()) {
         return buildStepResult(true);
     }
 
@@ -475,9 +469,9 @@ function step(iter = 500) { // On s'autorise un lot de 500 itérations par appel
     activeMode = self.mode; 
 
     for (let i = 0; i < iter; i++) {
-        // Sécurité : On vérifie le temps de temps en temps
         if (i % 50 === 0 && checkTime()) break;
-        // 1. Détection du parallélogramme (lève 'looped' s'il matche l'ancre active)
+
+        // 1. Détection du parallélogramme
         parallel();
         
         // 2. Traitement du rebouclage géométrique
@@ -487,9 +481,10 @@ function step(iter = 500) { // On s'autorise un lot de 500 itérations par appel
             
             let secondaryImprovementsCount = 0;
             let lastSecondaryScore = computeScore();
+            let loopBackup = snapshot();
 
-            // On effectue des étapes de perturbation légères sur le critère secondaire
-            for (let j = 0; j < 6000; j++) {
+            // Descente rapide sur le critère secondaire
+            for (let j = 0; j < 50; j++) {
                 parallel();
                 altern();
                 recomputeSums();
@@ -502,13 +497,17 @@ function step(iter = 500) { // On s'autorise un lot de 500 itérations par appel
                 }
             }
 
-            // Si échec de la perturbation secondaire : arrêt de sécurité
+            // AMÉLIORATION CONTINUE : Si la déviation échoue, on annule et on FORCÉ le saut au lieu de s'arrêter !
             if (secondaryImprovementsCount < 2) {
-                forceStop = true;
-                break;
+                restoreSnapshot(loopBackup);
+                if (self.val1 < SIZE - 1) {
+                    self.val1++;
+                } else {
+                    self.val1 = 1;
+                }
+                self.kd = 0;
             }
 
-            // Si réussi : on efface l'ancre (unknown), repasse en principal et on poursuit
             resetAnchor();
             activeMode = self.mode;
             continue; 
@@ -524,12 +523,18 @@ function step(iter = 500) { // On s'autorise un lot de 500 itérations par appel
         let scoreAfter = computeScore();
 
         if (scoreAfter < scoreBefore) {
-            // AMÉLIORATION LOCALE : Le paysage change, on reset l'ancre
+            // SUCCÈS : Amélioration locale trouvée, on vide l'ancre
             resetAnchor();
             bestScore = scoreAfter;
         } else {
-            // ÉCHEC : On applique le Rollback (Hill Climbing strict)
+            // ÉCHEC : On restaure la grille MAIS on force l'avancée de val1 pour chercher un autre parallélogramme
             restoreSnapshot(stateBackup);
+            if (self.val1 < SIZE - 1) {
+                self.val1++;
+            } else {
+                self.val1 = 1;
+            }
+            self.kd = 0;
         }
 
         // 4. Suivi du record Historique Global
@@ -545,9 +550,9 @@ function step(iter = 500) { // On s'autorise un lot de 500 itérations par appel
                 pos: pos.slice()
             };
             
-            resetAnchor(); // Remise à zéro complète (unknown)
+            resetAnchor(); 
         }
     }
 
-    return buildStepResult(checkTime() || forceStop);
+    return buildStepResult(checkTime());
 }
