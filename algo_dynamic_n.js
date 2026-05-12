@@ -15,6 +15,8 @@ let anchorPos1 = null;
 let anchorPos2 = null;
 let anchorPos3 = null;
 let anchorPos4 = null;
+let secondaryImprovementsCount = 0;
+let consecutiveNoImprove = 0;
 let looped = false; 
 
 // GESTION DU TEMPS (LIMITE 6 MINUTES)
@@ -473,12 +475,13 @@ function step(iter = 500) {
         // SÉCURITÉ ABSOLUE : On vérifie le temps à CHAQUE itération pour éviter le gel
         if (checkTime()) break;
 
-        // 1. Détection du parallélogramme
-        parallel();
-        
-        let secondaryImprovementsCount = 0;
+        if (!looped) {
+            // 1. Détection du parallélogramme
+            parallel();
+            consecutiveNoImprove = 0;
+        }
+        else {
         // 2. Traitement du rebouclage géométrique
-        if (looped) {
             console.log("Boucle géométrique détectée ! Bascule temporaire sur :", secondaryMode);
             activeMode = secondaryMode; 
             
@@ -486,7 +489,7 @@ function step(iter = 500) {
             let loopBackup = snapshot();
 
             // Descente rapide sur le critère secondaire (max 50 micro-itérations)
-            for (let j = 0; j < 500; j++) {
+            for (let j = 0; j < 80; j++) {
                 parallel();
                 altern();
                 recomputeSums();
@@ -495,29 +498,35 @@ function step(iter = 500) {
                 if (currentSecondaryScore < lastSecondaryScore) {
                     secondaryImprovementsCount++;
                     lastSecondaryScore = currentSecondaryScore;
-                    if (secondaryImprovementsCount >= 2) break; 
+                    if (secondaryImprovementsCount >= 2) {
+                        looped = false;
+                        break; 
+                    }
                 }
             }
 
             // Si la déviation a échoué : on restaure et on FORCE le saut
             if (secondaryImprovementsCount < 2) {
-                restoreSnapshot(loopBackup);
-                
-                // On force le passage au point de départ suivant
-                if (self.val1 < SIZE - 1) {
-                    self.val1++;
-                } else {
-                    self.val1 = 1;
+                consecutiveNoImprove++;
+                if (consecutiveNoImprove > 4) {
+                    restoreSnapshot(loopBackup);
+                    
+                    // On force le passage au point de départ suivant
+                    if (self.val1 < SIZE - 1) {
+                        self.val1++;
+                    } else {
+                        self.val1 = 1;
+                    }
+                    self.kd = 0;
+                    
+                    resetAnchor();
+                    activeMode = self.mode;
+                    
+                    // CRUCIAL : Au lieu de faire 'continue' et risquer de bloquer le thread,
+                    // on interrompt ce lot d'itérations prématurément pour rendre la main à l'IHM.
+                    // L'IHM pourra afficher le meilleur score actuel et relancer le step() suivant.
+                    break; 
                 }
-                self.kd = 0;
-                
-                resetAnchor();
-                activeMode = self.mode;
-                
-                // CRUCIAL : Au lieu de faire 'continue' et risquer de bloquer le thread,
-                // on interrompt ce lot d'itérations prématurément pour rendre la main à l'IHM.
-                // L'IHM pourra afficher le meilleur score actuel et relancer le step() suivant.
-                break; 
             }
 
             // Si la déviation a réussi
