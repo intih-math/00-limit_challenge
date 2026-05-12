@@ -465,26 +465,18 @@ function buildStepResult(timeOrForceOver) {
 
 let forceStop = false; 
 
-function step() {
+function step(iter = 500) { // On s'autorise un lot de 500 itérations par appel
     if (checkTime() || forceStop) {
         return buildStepResult(true);
     }
 
     // Détermination du critère secondaire temporaire
-    let secondaryMode = "diffRC";
-    if (self.mode === "diffRC") {
-        secondaryMode = "balance";
-    } else if (self.mode === "balance") {
-        secondaryMode = "diffRC";
-    } else if (self.mode === "diffDiag") {
-        secondaryMode = "diffRC";
-    }
-
+    let secondaryMode = self.mode === "diffRC" ? "balance" : "diffRC";
     activeMode = self.mode; 
 
-    i=0;
-    while (i % 50 !== 0 || !checkTime()) {
-        i++;
+    for (let i = 0; i < iter; i++) {
+        // Sécurité : On vérifie le temps de temps en temps
+        if (i % 50 === 0 && checkTime()) break;
         // 1. Détection du parallélogramme (lève 'looped' s'il matche l'ancre active)
         parallel();
         
