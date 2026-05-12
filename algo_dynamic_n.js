@@ -1,6 +1,6 @@
-// =========================
-// 🔧 STATE DYNAMIQUE
-// =========================
+// =========================================================================
+// 🔧 STATE DYNAMIQUE & CONFIGURATION
+// =========================================================================
 
 let N, SIZE;
 let startPositionStr = ""; 
@@ -10,9 +10,12 @@ let rowSum, colSum;
 
 let bestScore;
 
-let anchorVal1 = -1;
-let anchorVal3 = -1;
-let isPerturbing = false;
+// ANCRARES GÉOMÉTRIQUES (Parallélogrammes)
+let anchorPos1 = null;
+let anchorPos2 = null;
+let anchorPos3 = null;
+let anchorPos4 = null;
+let looped = false; 
 
 // GESTION DU TEMPS (LIMITE 6 MINUTES)
 let startTime = 0;
@@ -34,34 +37,17 @@ self.val3 = 0;
 self.kd   = 0;
 
 self.mode = "diffRC";          // Mode principal demandé par l'IHM
-let activeMode = "diffRC";     // Mode réellement évalué à l'instant t (peut être le secondaire)
+let activeMode = "diffRC";     // Mode réellement évalué à l'instant t
 
-// directions fixes
+// Directions fixes
 const DIRS = [
-  [3,0],[2,2],[0,3],[-2,2],
-  [-3,0],[-2,-2],[0,-3],[2,-2]
+  [3,0], [2,2], [0,3], [-2,2],
+  [-3,0], [-2,-2], [0,-3], [2,-2]
 ];
 
-/**
- * Affiche la grille actuelle dans la console sous forme de matrice
- */
-function debugPrintGrid() {
-    console.log("--- État de la Grille ---");
-    for (let i = 0; i < N; i++) {
-        let row = "";
-        for (let j = 0; j < N; j++) {
-            // grid[i * N + j] récupère la valeur à la ligne i, colonne j
-            let val = grid[i * N + j];
-            row += val.toString().padStart(4, " ") + " ";
-        }
-        console.log(row);
-    }
-    console.log("-------------------------");
-}
-
-// =========================
-// 🧱 INIT
-// =========================
+// =========================================================================
+// 🧱 INITIALISATION ET UTILS
+// =========================================================================
 
 function init(Nval, text) {
     N = Nval;
@@ -94,7 +80,7 @@ function init(Nval, text) {
     rowSum.fill(0);
     colSum.fill(0);
 
-    for (let i=0;i<SIZE;i++) {
+    for (let i = 0; i < SIZE; i++) {
         let v = values[i];
         grid[i] = v;
         pos[v] = i;
@@ -107,6 +93,7 @@ function init(Nval, text) {
     }
 
     bestScore = computeScore();
+    resetAnchor();
     
     const full = computeFullScoreFromFlat();
     globalBest = {
@@ -160,7 +147,6 @@ function buildGridFromMoves(N, start, moves) {
         x = x + dx;
         y = y + dy;
 
-        // Sécurité de validation stricte (monde plat)
         if (x < 0 || x >= N || y < 0 || y >= N) {
             console.error(`Saut invalide détecté à l'étape ${i} : position [${x}, ${y}] hors-limite.`);
         }
@@ -171,9 +157,36 @@ function buildGridFromMoves(N, start, moves) {
 
     return Array.from(grid);
 }
-// =========================
-// 🔁 Snapshot & Comparaison
-// =========================
+
+function debugPrintGrid() {
+    console.log("--- État de la Grille ---");
+    for (let i = 0; i < N; i++) {
+        let row = "";
+        for (let j = 0; j < N; j++) {
+            let val = grid[i * N + j];
+            row += val.toString().padStart(4, " ") + " ";
+        }
+        console.log(row);
+    }
+    console.log("-------------------------");
+}
+
+// =========================================================================
+// 🔁 GESTION DES ANCRES ET SNAPSHOTS
+// =========================================================================
+
+function resetAnchor() {
+    anchorPos1 = null;
+    anchorPos2 = null;
+    anchorPos3 = null;
+    anchorPos4 = null;
+    looped = false;
+}
+
+function isSamePos(p1, p2) {
+    if (!p1 || !p2) return false;
+    return p1[0] === p2[0] && p1[1] === p2[1];
+}
 
 function snapshot() {
     return {
@@ -197,21 +210,15 @@ function restoreSnapshot(s) {
     self.kd = s.kd;
 }
 
-// Vérifie si deux grilles sont parfaitement identiques (pour détecter le rebouclage)
-function areGridsEqual(gridA, gridB) {
-    for (let i = 0; i < gridA.length; i++) {
-        if (gridA[i] !== gridB[i]) return false;
-    }
-    return true;
-}
+// =========================================================================
+// 🔍 CŒUR GÉOMÉTRIQUE : DETECTION & ALTERNATION
+// =========================================================================
 
-// =========================
-// 🔍 Détection parallélogramme
-// =========================
 function parallel() {
     let found = false;
     let reprise = true;
     let nbIter = 0;
+    looped = false; 
 
     while (!found && nbIter < SIZE) {
         nbIter++;
@@ -240,6 +247,21 @@ function parallel() {
                             self.val3 = val3;
                             self.dk = k;
                             found = true;
+
+                            // Vérification ou enregistrement de l'ancre géométrique
+                            if (anchorPos1 === null) {
+                                anchorPos1 = pos1;
+                                anchorPos2 = pos2;
+                                anchorPos3 = pos3;
+                                anchorPos4 = pos4;
+                            } else {
+                                if (isSamePos(pos1, anchorPos1) && 
+                                    isSamePos(pos2, anchorPos2) && 
+                                    isSamePos(pos3, anchorPos3) && 
+                                    isSamePos(pos4, anchorPos4)) {
+                                    looped = true; 
+                                }
+                            }
                         }
                     }
                 }
@@ -259,21 +281,20 @@ function parallel() {
     }
 }
 
-// =========================
-// 🔁 Altern (géométrique)
-// =========================
 function altern() {
     let first = self.val1;
 
     if (first !== 0 && self.val3 > first) {
         let positions = [];
 
+        // Récupération de la séquence inverse
         for (let v = self.val3; v > first; v--) {
             positions.push(posOf(v));
         }
 
         let newVal = first + 1;
 
+        // Inversion géométrique du chemin
         for (let i = 0; i < positions.length; i++) {
             let [x, y] = positions[i];
             setVal(x, y, newVal);
@@ -282,9 +303,10 @@ function altern() {
     }
 }
 
-// =========================
-// ⚡ SCORE
-// =========================
+// =========================================================================
+// ⚡ CALCULS DE SCORES
+// =========================================================================
+
 function computeFullScoreFromFlat() {
     let sumsRow = new Int32Array(N);
     let sumsCol = new Int32Array(N);
@@ -344,26 +366,20 @@ function recomputeSums() {
 
     for (let i = 0; i < SIZE; i++) {
         let v = grid[i];
-
         let x = (i / N) | 0;
         let y = i % N;
-
         rowSum[x] += v;
         colSum[y] += v;
     }
 }
 
-// Évalue le score basé sur le mode "actif" à cet instant
 function computeScore() {
     const full = computeFullScoreFromFlat();
-
     if (activeMode === "diffDiag") return full.diffDiag;
     if (activeMode === "balance") return full.balance;
-
     return full.diffRC;
 }
 
-// Récupère la valeur du critère principal de sélection
 function computePrimaryScore() {
     const full = computeFullScoreFromFlat();
     if (self.mode === "diffDiag") return full.diffDiag;
@@ -380,13 +396,14 @@ function checkTime() {
     return isTimeOver;
 }
 
-// =========================
+// =========================================================================
 // 🔄 EXPORT DE LA SOLUTION
-// =========================
+// =========================================================================
+
 function exportSolutionFromGrid(targetGrid, targetPos) {
     let result = [];
-    
     let startPos = startPositionStr;
+    
     if (targetPos[1] !== undefined) {
         let startRow = (targetPos[1] / N) | 0;
         let startCol = targetPos[1] % N;
@@ -419,163 +436,9 @@ function exportSolutionFromGrid(targetGrid, targetPos) {
     return `${N} ${startPos} ${result.join("")}`;
 }
 
-
-// ===================================
-// 🔄 ALGORITHME PRINCIPAL + SECONDAIRE
-// ===================================
-
-let forceStop = false; // Permet de stopper définitivement le worker si l'optimisation secondaire échoue
-
-function step(iter = 500) {
-
-    if (checkTime() || forceStop) {
-        return buildStepResult(true);
-    }
-
-    // On mémorise la grille de départ de cette itération pour détecter le rebouclage
-    let loopStartGrid = grid.slice();
-    let looped = false;
-
-    // Détermination du critère secondaire temporaire
-    let secondaryMode = "diffRC";
-    if (self.mode === "diffRC") {
-        secondaryMode = "balance";
-    } else if (self.mode === "balance") {
-        secondaryMode = "diffRC";
-    } else if (self.mode === "diffDiag") {
-        secondaryMode = "diffRC";
-    }
-
-    activeMode = self.mode; // On commence par bosser sur le mode principal
-
-    for (let i = 0; i < iter; i++) {
-        if (i % 50 === 0 && checkTime()) break;
-
-        // Étape d'exploration classique
-        parallel();
-        altern();
-        recomputeSums();
-        debugPrintGrid();
-
-        // Si on améliore le critère principal historique global, on met à jour le record
-        const currentPrimary = computePrimaryScore();
-        if (currentPrimary < globalBest.score) {
-            const full = computeFullScoreFromFlat();
-            globalBest = {
-                score: currentPrimary,
-                diffRC: full.diffRC,
-                diffDiag: full.diffDiag,
-                balance: full.balance,
-                grid: grid.slice(),
-                pos: pos.slice()
-            };
-            // Comme on a trouvé une vraie amélioration globale, on redéfinit notre point d'ancrage anti-boucle
-            loopStartGrid = grid.slice();
-        }
-
-        // Détection de rebouclage sur la grille de départ de la phase
-        if (areGridsEqual(grid, loopStartGrid)) {
-            looped = true;
-            break; 
-        }
-    }
-
-    // 🚨 REBOUCLAGE DÉTECTÉ : Lancement de l'optimisation secondaire temporaire
-    if (looped && !checkTime()) {
-        activeMode = secondaryMode; // On bascule sur le critère secondaire
-        
-        let secondaryImprovementsCount = 0;
-        let lastSecondaryScore = computeScore();
-
-        // On fait des tentatives d'améliorations secondaires (max 1000 micro-itérations pour en trouver 2)
-        for (let j = 0; j < 1000; j++) {
-            if (j % 50 === 0 && checkTime()) break;
-
-            parallel();
-            altern();
-            recomputeSums();
-
-            let currentSecondaryScore = computeScore();
-            if (currentSecondaryScore < lastSecondaryScore) {
-                secondaryImprovementsCount++;
-                lastSecondaryScore = currentSecondaryScore;
-
-                // Si on a amélioré le critère secondaire 2 fois, on s'arrête là pour cette phase
-                if (secondaryImprovementsCount === 2) {
-                    break;
-                }
-            }
-        }
-
-        // Si on n'a PAS réussi à l'améliorer au moins 2 fois, on arrête définitivement l'algorithme !
-        if (secondaryImprovementsCount < 2) {
-            forceStop = true;
-        } else {
-            // Si on a réussi, on repasse sur le mode principal pour le tour suivant
-            activeMode = self.mode;
-        }
-    }
-
-    return buildStepResult(checkTime() || forceStop);
-}
-
-// Fonction utilitaire pour packager le retour
 function buildStepResult(timeOrForceOver) {
     const currentFull = computeFullScoreFromFlat();
-  function step(iter = 2000) {
-    for (let i = 0; i < iter; i++) {
-        // 1. Trouver la prochaine transformation candidate
-        parallel(); // Cette fonction met à jour self.val1 et self.val3
-
-        // 2. Détection de la boucle
-        if (self.val1 === anchorVal1 && self.val3 === anchorVal3) {
-            // On a fait le tour complet sans amélioration
-            console.log("Boucle détectée ! Passage au critère de perturbation.");
-            isPerturbing = true;
-            basculerCritere(); // Fonction pour changer le mode d'optimisation
-        }
-
-        let scoreBefore = computeScore();
-        
-        // 3. Appliquer la transformation
-        altern();
-        recomputeSums();
-        
-        let scoreAfter = computeScore();
-
-        // 4. Évaluation du résultat
-        if (scoreAfter < scoreBefore) { 
-            // AMÉLIORATION TROUVÉE
-            anchorVal1 = -1; // On réinitialise l'ancre car le paysage a changé
-            anchorVal3 = -1;
-            
-            if (isPerturbing) {
-                console.log("Amélioration trouvée via perturbation. Retour au mode normal.");
-                isPerturbing = false;
-                restaurerCritereNormal();
-            }
-            
-            // Logique optionnelle de descente profonde (ex: exploreTwoLevels)
-            bestScore = scoreAfter;
-        } else {
-            // ÉCHEC DE LA TENTATIVE
-            // Si c'est le premier échec après un démarrage/amélioration, on fixe l'ancre
-            if (anchorVal1 === -1) {
-                anchorVal1 = self.val1;
-                anchorVal3 = self.val3;
-            }
-            
-            // Revenir à l'état précédent (Hill Climbing strict)
-            // Note: assurez-vous d'avoir une fonction undoAltern() ou de ré-exécuter altern()
-            altern(); 
-            recomputeSums();
-        }
-    }
-    
-    // ... reste du code de retour (postMessage)
-}
-
-const currentPrimary = computePrimaryScore();
+    const currentPrimary = computePrimaryScore();
 
     return {
         timeOver: timeOrForceOver,
@@ -594,4 +457,105 @@ const currentPrimary = computePrimaryScore();
             solution: exportSolutionFromGrid(globalBest.grid, globalBest.pos)
         }
     };
+}
+
+// =========================================================================
+// 🔄 ALGORITHME PRINCIPAL (REFORMATÉ SANS DOUBLE DÉCLARATION)
+// =========================================================================
+
+let forceStop = false; 
+
+function step(iter = 500) {
+    if (checkTime() || forceStop) {
+        return buildStepResult(true);
+    }
+
+    // Détermination du critère secondaire temporaire
+    let secondaryMode = "diffRC";
+    if (self.mode === "diffRC") {
+        secondaryMode = "balance";
+    } else if (self.mode === "balance") {
+        secondaryMode = "diffRC";
+    } else if (self.mode === "diffDiag") {
+        secondaryMode = "diffRC";
+    }
+
+    activeMode = self.mode; 
+
+    for (let i = 0; i < iter; i++) {
+        if (i % 50 === 0 && checkTime()) break;
+
+        // 1. Détection du parallélogramme (lève 'looped' s'il matche l'ancre active)
+        parallel();
+        
+        // 2. Traitement du rebouclage géométrique
+        if (looped && !checkTime()) {
+            console.log("Boucle géométrique détectée ! Bascule temporaire sur :", secondaryMode);
+            activeMode = secondaryMode; 
+            
+            let secondaryImprovementsCount = 0;
+            let lastSecondaryScore = computeScore();
+
+            // On effectue des étapes de perturbation légères sur le critère secondaire
+            for (let j = 0; j < 50; j++) {
+                parallel();
+                altern();
+                recomputeSums();
+
+                let currentSecondaryScore = computeScore();
+                if (currentSecondaryScore < lastSecondaryScore) {
+                    secondaryImprovementsCount++;
+                    lastSecondaryScore = currentSecondaryScore;
+                    if (secondaryImprovementsCount >= 2) break; 
+                }
+            }
+
+            // Si échec de la perturbation secondaire : arrêt de sécurité
+            if (secondaryImprovementsCount < 2) {
+                forceStop = true;
+                break;
+            }
+
+            // Si réussi : on efface l'ancre (unknown), repasse en principal et on poursuit
+            resetAnchor();
+            activeMode = self.mode;
+            continue; 
+        }
+
+        // 3. Application de la transformation & Hill Climbing Strict
+        let stateBackup = snapshot(); 
+        let scoreBefore = computeScore();
+
+        altern();
+        recomputeSums();
+
+        let scoreAfter = computeScore();
+
+        if (scoreAfter < scoreBefore) {
+            // AMÉLIORATION LOCALE : Le paysage change, on reset l'ancre
+            resetAnchor();
+            bestScore = scoreAfter;
+        } else {
+            // ÉCHEC : On applique le Rollback (Hill Climbing strict)
+            restoreSnapshot(stateBackup);
+        }
+
+        // 4. Suivi du record Historique Global
+        const currentPrimary = computePrimaryScore();
+        if (currentPrimary < globalBest.score) {
+            const full = computeFullScoreFromFlat();
+            globalBest = {
+                score: currentPrimary,
+                diffRC: full.diffRC,
+                diffDiag: full.diffDiag,
+                balance: full.balance,
+                grid: grid.slice(),
+                pos: pos.slice()
+            };
+            
+            resetAnchor(); // Remise à zéro complète (unknown)
+        }
+    }
+
+    return buildStepResult(checkTime() || forceStop);
 }
