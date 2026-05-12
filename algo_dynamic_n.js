@@ -456,10 +456,11 @@ function buildStepResult(timeOrForceOver) {
 }
 
 // =========================================================================
-// 🔄 ALGORITHME PRINCIPAL REFORMATÉ (CORRIGÉ SANS ACCORDE ET SANS BLOCAGE)
+// 🔄 ALGORITHME PRINCIPAL SÉCURISÉ (FLUIDE ET SANS BLOCAGE THREAD)
 // =========================================================================
 
 function step(iter = 500) { 
+    // Si le temps global est écoulé, on s'arrête proprement immédiatement
     if (checkTime()) {
         return buildStepResult(true);
     }
@@ -469,13 +470,14 @@ function step(iter = 500) {
     activeMode = self.mode; 
 
     for (let i = 0; i < iter; i++) {
-        if (i % 50 === 0 && checkTime()) break;
+        // SÉCURITÉ ABSOLUE : On vérifie le temps à CHAQUE itération pour éviter le gel
+        if (checkTime()) break;
 
         // 1. Détection du parallélogramme
         parallel();
         
         // 2. Traitement du rebouclage géométrique
-        if (looped && !checkTime()) {
+        if (looped) {
             console.log("Boucle géométrique détectée ! Bascule temporaire sur :", secondaryMode);
             activeMode = secondaryMode; 
             
@@ -483,7 +485,7 @@ function step(iter = 500) {
             let lastSecondaryScore = computeScore();
             let loopBackup = snapshot();
 
-            // Descente rapide sur le critère secondaire
+            // Descente rapide sur le critère secondaire (max 50 micro-itérations)
             for (let j = 0; j < 50; j++) {
                 parallel();
                 altern();
@@ -497,17 +499,28 @@ function step(iter = 500) {
                 }
             }
 
-            // AMÉLIORATION CONTINUE : Si la déviation échoue, on annule et on FORCÉ le saut au lieu de s'arrêter !
+            // Si la déviation a échoué : on restaure et on FORCE le saut
             if (secondaryImprovementsCount < 2) {
                 restoreSnapshot(loopBackup);
+                
+                // On force le passage au point de départ suivant
                 if (self.val1 < SIZE - 1) {
                     self.val1++;
                 } else {
                     self.val1 = 1;
                 }
                 self.kd = 0;
+                
+                resetAnchor();
+                activeMode = self.mode;
+                
+                // CRUCIAL : Au lieu de faire 'continue' et risquer de bloquer le thread,
+                // on interrompt ce lot d'itérations prématurément pour rendre la main à l'IHM.
+                // L'IHM pourra afficher le meilleur score actuel et relancer le step() suivant.
+                break; 
             }
 
+            // Si la déviation a réussi
             resetAnchor();
             activeMode = self.mode;
             continue; 
@@ -523,12 +536,14 @@ function step(iter = 500) {
         let scoreAfter = computeScore();
 
         if (scoreAfter < scoreBefore) {
-            // SUCCÈS : Amélioration locale trouvée, on vide l'ancre
+            // SUCCÈS : Amélioration locale, on réinitialise l'ancre
             resetAnchor();
             bestScore = scoreAfter;
         } else {
-            // ÉCHEC : On restaure la grille MAIS on force l'avancée de val1 pour chercher un autre parallélogramme
+            // ÉCHEC : On annule les modifications sur la grille
             restoreSnapshot(stateBackup);
+            
+            // On force l'avancement de val1 pour chercher un AUTRE parallélogramme au coup d'après
             if (self.val1 < SIZE - 1) {
                 self.val1++;
             } else {
@@ -554,5 +569,8 @@ function step(iter = 500) {
         }
     }
 
+    // Renvoie proprement le statut à l'IHM (qui sortira de "Recherche démarrée...")
+    return buildStepResult(checkTime());
+}
     return buildStepResult(checkTime());
 }
