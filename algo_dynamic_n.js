@@ -476,17 +476,17 @@ function step(iter = 500) {
         // 1. Détection du parallélogramme
         parallel();
         
+        let secondaryImprovementsCount = 0;
         // 2. Traitement du rebouclage géométrique
         if (looped) {
             console.log("Boucle géométrique détectée ! Bascule temporaire sur :", secondaryMode);
             activeMode = secondaryMode; 
             
-            let secondaryImprovementsCount = 0;
             let lastSecondaryScore = computeScore();
             let loopBackup = snapshot();
 
             // Descente rapide sur le critère secondaire (max 50 micro-itérations)
-            for (let j = 0; j < 50; j++) {
+            for (let j = 0; j < 500; j++) {
                 parallel();
                 altern();
                 recomputeSums();
@@ -521,6 +521,7 @@ function step(iter = 500) {
             }
 
             // Si la déviation a réussi
+            parallel();
             resetAnchor();
             activeMode = self.mode;
             continue; 
