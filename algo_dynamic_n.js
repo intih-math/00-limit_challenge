@@ -465,7 +465,7 @@ function buildStepResult(timeOrForceOver) {
 
 let forceStop = false; 
 
-function step(iter = 500) {
+function step() {
     if (checkTime() || forceStop) {
         return buildStepResult(true);
     }
@@ -482,9 +482,9 @@ function step(iter = 500) {
 
     activeMode = self.mode; 
 
-    for (let i = 0; i < iter; i++) {
-        if (i % 50 === 0 && checkTime()) break;
-
+    i=0;
+    while (i % 50 !== 0 || !checkTime()) {
+        i++;
         // 1. Détection du parallélogramme (lève 'looped' s'il matche l'ancre active)
         parallel();
         
@@ -497,7 +497,7 @@ function step(iter = 500) {
             let lastSecondaryScore = computeScore();
 
             // On effectue des étapes de perturbation légères sur le critère secondaire
-            for (let j = 0; j < 50; j++) {
+            for (let j = 0; j < 500; j++) {
                 parallel();
                 altern();
                 recomputeSums();
