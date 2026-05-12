@@ -497,7 +497,7 @@ function step() {
             let lastSecondaryScore = computeScore();
 
             // On effectue des étapes de perturbation légères sur le critère secondaire
-            for (let j = 0; j < 500; j++) {
+            for (let j = 0; j < 6000; j++) {
                 parallel();
                 altern();
                 recomputeSums();
