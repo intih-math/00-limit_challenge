@@ -15,8 +15,6 @@ let anchorPos1 = null;
 let anchorPos2 = null;
 let anchorPos3 = null;
 let anchorPos4 = null;
-let secondaryImprovementsCount = 0;
-let consecutiveNoImprove = 0;
 let looped = false; 
 
 // GESTION DU TEMPS (LIMITE 6 MINUTES)
@@ -462,68 +460,73 @@ function buildStepResult(timeOrForceOver) {
 // =========================================================================
 
 function step(iter = 500) { 
+    // Si le temps global est écoulé, on s'arrête proprement immédiatement
     if (checkTime()) {
         return buildStepResult(true);
     }
 
+    // Détermination du critère secondaire temporaire
     let secondaryMode = self.mode === "diffRC" ? "balance" : "diffRC";
     activeMode = self.mode; 
 
     for (let i = 0; i < iter; i++) {
+        // SÉCURITÉ ABSOLUE : On vérifie le temps à CHAQUE itération pour éviter le gel
         if (checkTime()) break;
 
-        if (!looped) {
-            parallel();
-            consecutiveNoImprove = 0;
-        } else {
-            // TRAITEMENT DU REBOUCLAGE
+        // 1. Détection du parallélogramme
+        parallel();
+        
+        // 2. Traitement du rebouclage géométrique
+        if (looped) {
+            console.log("Boucle géométrique détectée ! Bascule temporaire sur :", secondaryMode);
             activeMode = secondaryMode; 
             
-            // INDISPENSABLE : Remise à zéro pour ce cycle de secours
-            let currentSecondaryImprovements = 0; 
+            let secondaryImprovementsCount = 0;
             let lastSecondaryScore = computeScore();
             let loopBackup = snapshot();
 
-            for (let j = 0; j < 80; j++) {
+            // Descente rapide sur le critère secondaire (max 50 micro-itérations)
+            for (let j = 0; j < 50; j++) {
                 parallel();
                 altern();
                 recomputeSums();
 
                 let currentSecondaryScore = computeScore();
                 if (currentSecondaryScore < lastSecondaryScore) {
-                    currentSecondaryImprovements++;
+                    secondaryImprovementsCount++;
                     lastSecondaryScore = currentSecondaryScore;
-                    if (currentSecondaryImprovements >= 2) {
-                        looped = false;
-                        break; 
-                    }
+                    if (secondaryImprovementsCount >= 2) break; 
                 }
             }
 
-            if (currentSecondaryImprovements < 2) {
-                consecutiveNoImprove++;
-                if (consecutiveNoImprove > 4) {
-                    restoreSnapshot(loopBackup);
-                    
-                    if (self.val1 < SIZE - 1) {
-                        self.val1++;
-                    } else {
-                        self.val1 = 1;
-                    }
-                    self.kd = 0;
-                    
-                    resetAnchor();
-                    activeMode = self.mode;
-                    break; // On rend la main à l'IHM
+            // Si la déviation a échoué : on restaure et on FORCE le saut
+            if (secondaryImprovementsCount < 2) {
+                restoreSnapshot(loopBackup);
+                
+                // On force le passage au point de départ suivant
+                if (self.val1 < SIZE - 1) {
+                    self.val1++;
+                } else {
+                    self.val1 = 1;
                 }
+                self.kd = 0;
+                
+                resetAnchor();
+                activeMode = self.mode;
+                
+                // CRUCIAL : Au lieu de faire 'continue' et risquer de bloquer le thread,
+                // on interrompt ce lot d'itérations prématurément pour rendre la main à l'IHM.
+                // L'IHM pourra afficher le meilleur score actuel et relancer le step() suivant.
+                break; 
             }
 
+            // Si la déviation a réussi
             resetAnchor();
             activeMode = self.mode;
             continue; 
         }
 
-        // 3. HILL CLIMBING PRINCIPAL
+        // 3. Application de la transformation & Hill Climbing Strict
         let stateBackup = snapshot(); 
         let scoreBefore = computeScore();
 
@@ -533,12 +536,14 @@ function step(iter = 500) {
         let scoreAfter = computeScore();
 
         if (scoreAfter < scoreBefore) {
+            // SUCCÈS : Amélioration locale, on réinitialise l'ancre
             resetAnchor();
             bestScore = scoreAfter;
         } else {
+            // ÉCHEC : On annule les modifications sur la grille
             restoreSnapshot(stateBackup);
             
-            // Forcer l'avancement pour explorer la grille
+            // On force l'avancement de val1 pour chercher un AUTRE parallélogramme au coup d'après
             if (self.val1 < SIZE - 1) {
                 self.val1++;
             } else {
@@ -547,7 +552,7 @@ function step(iter = 500) {
             self.kd = 0;
         }
 
-        // 4. RECORD GLOBAL
+        // 4. Suivi du record Historique Global
         const currentPrimary = computePrimaryScore();
         if (currentPrimary < globalBest.score) {
             const full = computeFullScoreFromFlat();
@@ -559,9 +564,11 @@ function step(iter = 500) {
                 grid: grid.slice(),
                 pos: pos.slice()
             };
+            
             resetAnchor(); 
         }
     }
 
+    // Renvoie proprement le statut à l'IHM (qui sortira de "Recherche démarrée...")
     return buildStepResult(checkTime());
 }
