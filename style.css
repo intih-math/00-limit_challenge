@@ -112,9 +112,22 @@ textarea {
   overflow-x: auto;
 }
 
-/* =========================
-   BOUTONS GÉNÉRAUX
-========================= */
+.leaderboard-container {
+  display: flex;
+  justify-content: space-around;
+  gap: 10px;
+  background: #111;
+  padding: 15px;
+}
+.board-column { flex: 1; color: white; }
+table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+th { border-bottom: 1px solid #444; padding: 5px; }
+td { padding: 4px; text-align: center; }
+
+/* Couleurs des lignes */
+.row-path { background-color: rgba(255, 255, 255, 0.05); } /* Non-cycle */
+.row-cycle { background-color: rgba(0, 255, 255, 0.1); }   /* Cycle */
+.alert-match { color: #ff3e3e; font-weight: bold; }        /* ! */
 
 /* Séparateur */
 hr {
