@@ -421,20 +421,99 @@ function loadGrid() {
 // =====================
 // SUBMIT
 // =====================
+// Remplacez la fonction window.submit existante dans game.js par celle-ci :
 window.submit = async function () {
   const name = document.getElementById("name").value || "Anonyme";
+  const input = document.getElementById("loadInput").value.trim();
 
-  const result = window.loadGrid();
+  if (!input) {
+    alert("Veuillez entrer un parcours dans le champ prévu.");
+    return;
+  }
 
-  if (!result) return;
+  // 1. Découpage de l'input (Format attendu : "N x,y chemin")
+  const parts = input.split(" ");
+  if (parts.length < 3) {
+    alert("Format invalide. Attendu : N x,y chemin");
+    return;
+  }
 
-  // 👉 affichage dans la page
-  document.getElementById("diffRC").innerText = result.diffRC;
-  document.getElementById("diffDiag").innerText = result.diffDiag;
-  document.getElementById("balance").innerText = result.balance;
+  const nValue = parseInt(parts[0]);
+  const startPos = parts[1].split(",").map(Number);
+  const path = parts[2];
 
-  // 👉 si tu veux envoyer un score (ex: diffDiag)
-  await submitScore(name, result.diffDiag);
+  // 2. Vérification de la complétude (N*N cases au total, donc N*N-1 mouvements)
+  if (path.length !== (nValue * nValue - 1)) {
+    alert(`Grille incomplète : ${path.length + 1}/${nValue * nValue} cases. Le record ne peut pas être validé.`);
+    return;
+  }
 
-  loadLeaderboard();
+  // 3. Reconstruction de la grille pour validation et calcul des scores
+  let tempGrid = Array.from({ length: nValue }, () => Array(nValue).fill(0));
+  let r = startPos[0];
+  let c = startPos[1];
+  tempGrid[r][c] = 1;
+
+  for (let k = 0; k < path.length; k++) {
+    let moveIndex = parseInt(path[k]);
+    let move = moves[moveIndex]; // Utilise les moves définis dans game.js
+    
+    // Version circulaire (modulo N)
+    r = (r + move[0] + nValue) % nValue;
+    c = (c + move[1] + nValue) % nValue;
+    
+    if (tempGrid[r][c] !== 0) {
+      alert("Erreur : Le parcours est invalide (repasse par une case occupée).");
+      return;
+    }
+    tempGrid[r][c] = k + 2;
+  }
+
+  const lastPos = [r, c];
+
+  // 4. Détection de cycle : peut-on sauter de la fin au début ?
+  let isCycle = false;
+  for (let m of moves) {
+    let targetR = (lastPos[0] + m[0] + nValue) % nValue;
+    let targetC = (lastPos[1] + m[1] + nValue) % nValue;
+    if (targetR === startPos[0] && targetC === startPos[1]) {
+      isCycle = true;
+      break;
+    }
+  }
+
+  // 5. Calcul des scores complets
+  // Utilise la fonction computeFullScore déjà présente dans game.js
+  const scores = computeFullScore(nValue, tempGrid);
+
+  // 6. Préparation de l'objet pour Firebase
+  const recordData = {
+    name: name,
+    n: nValue,
+    type: isCycle ? "cycle" : "parcours",
+    diffRC: scores.diffRC,
+    diffDiag: scores.diffDiag,
+    balance: scores.balance,
+    input: input,
+    timestamp: Date.now()
+  };
+
+  // 7. Envoi à Firebase et mise à jour
+  try {
+    // Appelle la fonction de soumission définie dans firebase.js
+    await window.submitScore(recordData);
+    
+    // Mise à jour de l'affichage des scores sur la page
+    document.getElementById("diffRC").innerText = scores.diffRC;
+    document.getElementById("diffDiag").innerText = scores.diffDiag;
+    document.getElementById("balance").innerText = scores.balance;
+
+    // Recharger le classement si la fonction existe
+    if (window.loadLeaderboard) {
+      window.loadLeaderboard();
+    }
+  } catch (error) {
+    console.error("Erreur lors de l'envoi :", error);
+    alert("Erreur lors de l'enregistrement du record.");
+  }
 };
