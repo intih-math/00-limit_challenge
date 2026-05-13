@@ -61,7 +61,28 @@
 <img src="DoubleBalance0_N=24.png"> 
   
 <h2>🏆 Classement</h2>
-<ul id="leaderboard"></ul>
+<div class="leaderboard-controls">
+  <button onclick="changeRange(-5)">◀ Précédent</button>
+  <span id="range-display">Tailles 5 à 14</span>
+  <button onclick="changeRange(5)">Suivant ▶</button>
+</div>
+
+<div class="leaderboard-container">
+  <div class="board-column">
+    <h3>🟢 Records + </h3>
+    <table id="table-rc"><thead><tr><th>N</th><th>Record</th></tr></thead><tbody></tbody></table>
+  </div>
+
+  <div class="board-column">
+    <h3>🔵 Records +x </h3>
+    <table id="table-diag"><thead><tr><th>N</th><th>Record</th></tr></thead><tbody></tbody></table>
+  </div>
+
+  <div class="board-column">
+    <h3>Records Balance ⚖️</h3>
+    <table id="table-balance"><thead><tr><th>N</th><th>Record</th></tr></thead><tbody></tbody></table>
+  </div>
+</div>
 
 <script type="module" src="firebase.js"></script>
 <script src="game.js"></script>
