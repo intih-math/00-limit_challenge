@@ -1,4 +1,4 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
 import {
   getFirestore,
   collection,
@@ -8,12 +8,18 @@ import {
   orderBy,
   where, // Ajouté
   limit  // Ajouté
-} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
 
+// Your web app's Firebase configuration
 const firebaseConfig = {
-  // ... tes infos ...
+    apiKey: "AIzaSyCpPsCrJspIuvzMqvkhywIXBMCULSQnpl0",
+    authDomain: "limit-challenge-a7be6.firebaseapp.com",
+    projectId: "limit-challenge-a7be6",
+    storageBucket: "limit-challenge-a7be6.firebasestorage.app",
+    messagingSenderId: "785701614479",
+    appId: "1:785701614479:web:66c5f749e1a3855d3c11fa"
 };
-
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
