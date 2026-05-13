@@ -1,4 +1,7 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+// 1. On importe UNIQUEMENT l'initialisation depuis le module "app"
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+
+// 2. On importe TOUTES les fonctions de la base de données depuis le module "firestore"
 import {
   getFirestore,
   collection,
@@ -6,9 +9,9 @@ import {
   getDocs,
   query,
   orderBy,
-  where, // Ajouté
-  limit  // Ajouté
-} from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+  where,
+  limit
+} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
