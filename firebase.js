@@ -119,11 +119,12 @@ function createRow(n, record, className, label, isMatch, bestPath, bestCycle) {
     }
   }
   
-  // 2. Le point d'exclamation s'affiche uniquement sur la ligne du Cycle ("C") 
+// Le point d'exclamation s'affiche uniquement sur la ligne du Cycle ("C") 
   // et seulement si le score cycle est inférieur ou égal au record parcours (non cycle)
   let matchIcon = '';
   if (label === "C" && bestCycle && bestPath) {
     if (bestCycle.val <= bestPath.val) {
+      // On applique simplement la classe CSS qu'on vient de créer !
       matchIcon = ' <span class="alert-match">!</span>';
     }
   }
