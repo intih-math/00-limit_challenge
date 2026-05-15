@@ -126,8 +126,21 @@ td { padding: 4px; text-align: center; }
 
 /* Couleurs des lignes */
 .row-path { background-color: rgba(255, 255, 255, 0.05); } /* Non-cycle */
-.row-cycle { background-color: rgba(0, 255, 255, 0.1); }   /* Cycle */
-.alert-match { color: #ff3e3e; font-weight: bold; }        /* ! */
+.row-cycle { background-color: rgba(0, 255, 255, 0.1); }   /* Cycle *//* Style du point d'exclamation d'alerte cycle */
+.alert-match {
+  color: #ff0000;          /* Rouge vif */
+  font-weight: bold;       /* En gras */
+  font-size: 1.3rem;       /* Légèrement plus grand que le pseudo */
+  margin-left: 6px;        /* Petit espace après la parenthèse du pseudo */
+  display: inline-block;   /* Évite les sauts de ligne bizarres */
+  animation: pulse 1.5s infinite; /* Optionnel : un petit effet de pulsation */
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
 
 /* Séparateur */
 hr {
