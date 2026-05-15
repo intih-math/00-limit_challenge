@@ -408,10 +408,8 @@ function loadGrid() {
     let move = moves[moveIndex];
 
     if (!move) continue;
-
-    // version circulaire comme Python
-    i = (i + move[0] + N) % N;
-    j = (j + move[1] + N) % N;
+    i = i + move[0];
+    j = j + move[1];
 
     temp[i][j] = val++;
   }
@@ -462,7 +460,7 @@ window.submit = async function () {
     r = r + move[0];
     c = c + move[1];
     
-    if (r<0 || r>=nValue || l<0 || l>nValue || tempGrid[r][c] !== 0) {
+    if (r < 0 || r >= nValue || c < 0 || c >= nValue || tempGrid[r][c] !== 0) {
       alert("Erreur : Le parcours est invalide (repasse par une case occupée).");
       return;
     }
