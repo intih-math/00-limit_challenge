@@ -101,11 +101,19 @@ function getBest(list, key) {
 
   return { val: list[0][key], name: list[0].name };
 }
+
 function createRow(n, record, className, label, isMatch) {
   const tr = document.createElement("tr");
   tr.className = className;
   
-  const valDisplay = record ? `${record.val} (${record.name})` : "-";
+  // 1. On prépare l'affichage par défaut si aucun record n'existe
+  let valDisplay = "-";
+  
+  // 2. Si un record existe, on l'affiche en gras et avec une taille augmentée (ex: 1.2rem ou 18px)
+  if (record) {
+    valDisplay = `<strong style="font-size: 1.2rem;">${record.val} (${record.name})</strong>`;
+  }
+  
   const matchIcon = isMatch ? ' <span class="alert-match">!</span>' : '';
   
   tr.innerHTML = `
