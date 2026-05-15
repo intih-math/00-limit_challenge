@@ -76,10 +76,12 @@ window.loadLeaderboard = async function () {
         const bestPath = getBest(scoresN.filter(d => d.type === "parcours"), cat);
         const bestCycle = getBest(scoresN.filter(d => d.type === "cycle"), cat);
 
-        tbody.appendChild(createRow(n, bestPath, "row-path", "P"));
-        
-        const isMatch = (bestPath && bestCycle && bestPath.val === bestCycle.val);
-        tbody.appendChild(createRow(n, bestCycle, "row-cycle", "C", isMatch));
+
+        // Ligne pour le Parcours (P)
+        tbody.appendChild(createRow(n, bestPath, "row-path", "P", false, bestPath, bestCycle));
+
+        // Ligne pour le Cycle (C) - C'est elle qui analysera si le cycle est <= au parcours
+        tbody.appendChild(createRow(n, bestCycle, "row-cycle", "C", false, bestPath, bestCycle));
       }
     });
   } catch (err) {
