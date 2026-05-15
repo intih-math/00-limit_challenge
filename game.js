@@ -459,10 +459,10 @@ window.submit = async function () {
     let move = moves[moveIndex]; // Utilise les moves définis dans game.js
     
     // Version circulaire (modulo N)
-    r = (r + move[0] + nValue) % nValue;
-    c = (c + move[1] + nValue) % nValue;
+    r = r + move[0];
+    c = c + move[1];
     
-    if (tempGrid[r][c] !== 0) {
+    if (r<0 || r>=nValue || l<0 || l>nValue || tempGrid[r][c] !== 0) {
       alert("Erreur : Le parcours est invalide (repasse par une case occupée).");
       return;
     }
@@ -474,8 +474,8 @@ window.submit = async function () {
   // 4. Détection de cycle : peut-on sauter de la fin au début ?
   let isCycle = false;
   for (let m of moves) {
-    let targetR = (lastPos[0] + m[0] + nValue) % nValue;
-    let targetC = (lastPos[1] + m[1] + nValue) % nValue;
+    let targetR = lastPos[0] + m[0];
+    let targetC = lastPos[1] + m[1];
     if (targetR === startPos[0] && targetC === startPos[1]) {
       isCycle = true;
       break;
