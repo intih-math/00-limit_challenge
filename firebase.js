@@ -102,19 +102,29 @@ function getBest(list, key) {
   return { val: list[0][key], name: list[0].name };
 }
 
-function createRow(n, record, className, label, isMatch) {
+function createRow(n, record, className, label, isMatch, bestPath, bestCycle) {
   const tr = document.createElement("tr");
   tr.className = className;
   
-  // 1. On prépare l'affichage par défaut si aucun record n'existe
   let valDisplay = "-";
   
-  // 2. Si un record existe, on l'affiche en gras et avec une taille augmentée (ex: 1.2rem ou 18px)
   if (record) {
-    valDisplay = `<strong style="font-size: 1.2rem;">${record.val} (${record.name})</strong>`;
+    // 1. Gestion de la couleur rouge si le score est égal à 0
+    if (record.val === 0) {
+      valDisplay = `<strong style="font-size: 1.2rem; color: red;">${record.val} (${record.name})</strong>`;
+    } else {
+      valDisplay = `<strong style="font-size: 1.2rem;">${record.val} (${record.name})</strong>`;
+    }
   }
   
-  const matchIcon = isMatch ? ' <span class="alert-match">!</span>' : '';
+  // 2. Le point d'exclamation s'affiche uniquement sur la ligne du Cycle ("C") 
+  // et seulement si le score cycle est inférieur ou égal au record parcours (non cycle)
+  let matchIcon = '';
+  if (label === "C" && bestCycle && bestPath) {
+    if (bestCycle.val <= bestPath.val) {
+      matchIcon = ' <span class="alert-match">!</span>';
+    }
+  }
   
   tr.innerHTML = `
     <td>${label} ${n}</td>
