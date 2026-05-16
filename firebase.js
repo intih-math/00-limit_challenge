@@ -111,29 +111,43 @@ function createRow(n, record, className, label, isMatch, bestPath, bestCycle) {
   // 1. Valeurs par défaut si aucun record n'est enregistré
   let scoreDisplay = "-";
   let nameDisplay = "-";
+  let dateDisplay = "-"; // Nouvelle colonne date
   
   if (record) {
-    nameDisplay = record.name; // Le pseudo est extrait pur, sans parenthèses
+    nameDisplay = record.name;
     
-    // 2. Gestion de la couleur et du style du score (Rouge si 0)
+    // 2. Formatage de la date compacte (JJ/MM/AA)
+    if (record.timestamp) {
+      const dateObj = new Date(record.timestamp);
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      // Récupère les 2 derniers chiffres de l'année
+      const year = String(dateObj.getFullYear()).slice(-2); 
+      
+      dateDisplay = `${day}/${month}/${year}`;
+    }
+    
+    // 3. Gestion de la couleur si le score est égal à 0
     if (record.val === 0) {
       scoreDisplay = `<strong style="font-size: 1.2rem; color: red;">${record.val}</strong>`;
-      nameDisplay = `<span style="color: red;">${record.name}</span>`; // Optionnel : met aussi le nom en rouge si score à 0
+      nameDisplay = `<span style="color: red;">${record.name}</span>`;
+      dateDisplay = `<span style="color: red;">${dateDisplay}</span>`;
     } else {
       scoreDisplay = `<strong style="font-size: 1.2rem;">${record.val}</strong>`;
     }
   }
   
-  // 3. Logique du point d'exclamation (uniquement sur la ligne Cycle "C" si cycle <= parcours)
+  // 4. Logique du point d'exclamation (uniquement sur la ligne Cycle "C" si cycle <= parcours)
   if (label === "C" && bestCycle && bestPath && bestCycle.val <= bestPath.val) {
     scoreDisplay += ' <span class="alert-match">!</span>';
   }
   
-  // 4. Génération des 3 colonnes distinctes
+  // 5. Génération des 4 colonnes distinctes
   tr.innerHTML = `
     <td>${label} ${n}</td>
     <td>${scoreDisplay}</td>
     <td>${nameDisplay}</td>
+    <td>${dateDisplay}</td>
   `;
   return tr;
 }
