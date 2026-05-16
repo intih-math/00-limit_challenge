@@ -27,14 +27,79 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // --- FONCTION DE SOUMISSION ---
-window.submitScore = async function (docData) {
-  try {
-    await addDoc(collection(db, "scores"), docData);
-    alert("Record enregistré !");
-  } catch (e) {
-    console.error("Erreur : ", e);
-  }
-};
+async function submitScore(newGameData) {
+    const db = getFirestore();
+    
+    // 1. On récupère TOUS les scores existants pour cette configuration (n + type)
+    // (Idéal pour comparer les 3 critères d'un coup)
+    const q = query(
+        collection(db, "scores"),
+        where("n", "==", newGameData.n),
+        where("type", "==", newGameData.type)
+    );
+
+    try {
+        const querySnapshot = await getDocs(q);
+        
+        // Initialisation des records actuels à l'infini (si la base est vide)
+        let recordDiffRC = Infinity;
+        let recordDiffDiag = Infinity;
+        let recordBalance = Infinity;
+
+        // 2. On parcourt les scores existants pour trouver les 3 meilleurs scores distincts
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            if (data.diffRC < recordDiffRC) recordDiffRC = data.diffRC;
+            if (data.diffDiag < recordDiffDiag) recordDiffDiag = data.diffDiag;
+            if (data.balance < recordBalance) recordBalance = data.balance;
+        });
+
+        // 3. Vérification des conditions (STRICTEMENT INFÉRIEUR)
+        const beatsRC = newGameData.diffRC < recordDiffRC;
+        const beatsDiag = newGameData.diffDiag < recordDiffDiag;
+        const beatsBalance = newGameData.balance < recordBalance;
+
+        // 4. Si le joueur bat AU MOINS UN des trois records, on valide !
+        if (beatsRC || beatsDiag || beatsBalance) {
+            
+            let breakingNews = "Félicitations ! Nouveau record battu pour : ";
+            if (beatsRC) breakingNews += `[+ : ${newGameData.diffRC} < ${recordDiffRC}] `;
+            if (beatsDiag) breakingNews += `[+x : ${newGameData.diffDiag} < ${recordDiffDiag}] `;
+            if (beatsBalance) breakingNews += `[balance+ : ${newGameData.balance} < ${recordBalance}]`;
+            
+            console.log(breakingNews);
+
+            // Sauvegarde dans Firestore
+            await addDoc(collection(db, "scores"), {
+                name: newGameData.name,
+                n: newGameData.n,
+                type: newGameData.type,
+                diffRC: newGameData.diffRC,
+                diffDiag: newGameData.diffDiag,
+                balance: newGameData.balance,
+                input: newGameData.input,
+                timestamp: Date.now() // Utile pour savoir quand le record a été établi
+            });
+
+            return true;
+        } else {
+            console.log("Dommage ! Ce score ne bat aucun des trois records existants (diffRC, diffDiag ou balance).");
+            return false;
+        }
+
+    } catch (error) {
+        console.error("Erreur lors de la validation des records :", error);
+        return false;
+    }
+}
+//window.submitScore = async function (docData) {
+//  try {
+//    await addDoc(collection(db, "scores"), docData);
+//    alert("Record enregistré !");
+//  } catch (e) {
+//    console.error("Erreur : ", e);
+//  }
+//};
 
 // --- GESTION DU CLASSEMENT ---
 let startN = 5;
