@@ -92,16 +92,19 @@ window.loadLeaderboard = async function () {
 function getBest(list, key) {
   if (list.length === 0) return null;
   
-  // On trie d'abord par score (croissant car on cherche le min d'écart)
-  // PUIS par timestamp (croissant) pour garder le plus ancien en cas d'égalité
   list.sort((a, b) => {
     if (a[key] !== b[key]) {
-      return a[key] - b[key]; // Le plus petit score gagne
+      return a[key] - b[key];
     }
-    return a.timestamp - b.timestamp; // À score égal, le plus vieux (plus petit timestamp) gagne
+    return a.timestamp - b.timestamp;
   });
 
-  return { val: list[0][key], name: list[0].name };
+  // AJOUT DE L'EXTRACTION DU TIMESTAMP ICI
+  return { 
+    val: list[0][key], 
+    name: list[0].name,
+    timestamp: list[0].timestamp // On fait suivre la date !
+  };
 }
 
 function createRow(n, record, className, label, isMatch, bestPath, bestCycle) {
