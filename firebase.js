@@ -108,33 +108,34 @@ function createRow(n, record, className, label, isMatch, bestPath, bestCycle) {
   const tr = document.createElement("tr");
   tr.className = className;
   
-  let valDisplay = "-";
+  // 1. Valeurs par défaut si aucun record n'est enregistré
+  let scoreDisplay = "-";
+  let nameDisplay = "-";
   
   if (record) {
-    // 1. Gestion de la couleur rouge si le score est égal à 0
+    nameDisplay = record.name; // Le pseudo est extrait pur, sans parenthèses
+    
+    // 2. Gestion de la couleur et du style du score (Rouge si 0)
     if (record.val === 0) {
-      valDisplay = `<strong style="font-size: 1.2rem; color: red;">${record.val} (${record.name})</strong>`;
+      scoreDisplay = `<strong style="font-size: 1.2rem; color: red;">${record.val}</strong>`;
+      nameDisplay = `<span style="color: red;">${record.name}</span>`; // Optionnel : met aussi le nom en rouge si score à 0
     } else {
-      valDisplay = `<strong style="font-size: 1.2rem;">${record.val} (${record.name})</strong>`;
+      scoreDisplay = `<strong style="font-size: 1.2rem;">${record.val}</strong>`;
     }
   }
   
-// Le point d'exclamation s'affiche uniquement sur la ligne du Cycle ("C") 
-  // et seulement si le score cycle est inférieur ou égal au record parcours (non cycle)
-  let matchIcon = '';
-  if (label === "C" && bestCycle && bestPath) {
-    if (bestCycle.val <= bestPath.val) {
-      // On applique simplement la classe CSS qu'on vient de créer !
-      matchIcon = ' <span class="alert-match">!</span>';
-    }
+  // 3. Logique du point d'exclamation (uniquement sur la ligne Cycle "C" si cycle <= parcours)
+  if (label === "C" && bestCycle && bestPath && bestCycle.val <= bestPath.val) {
+    scoreDisplay += ' <span class="alert-match">!</span>';
   }
   
+  // 4. Génération des 3 colonnes distinctes
   tr.innerHTML = `
     <td>${label} ${n}</td>
-    <td>${valDisplay}${matchIcon}</td>
+    <td>${scoreDisplay}</td>
+    <td>${nameDisplay}</td>
   `;
   return tr;
 }
-
 // Lancement initial
 window.loadLeaderboard();
