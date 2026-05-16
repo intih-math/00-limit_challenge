@@ -23,14 +23,14 @@ body {
    SECTION OPTIMISER
 ========================= */
 
-.optimiser {
+.ser {
   display: flex;
   gap: 40px;
   align-items: flex-start;
   margin-top: 20px;
 }
 
-.optimiser-image img {
+.ser-image img {
   height: 650px;
   width: auto;
   object-fit: contain;
@@ -38,14 +38,14 @@ body {
   box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 }
 
-.optimiser-panel {
+.ser-panel {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.optimiser-panel textarea {
+.ser-panel textarea {
   width: 100%;
   font-family: monospace;
   padding: 10px;
@@ -113,11 +113,11 @@ hr {
 ========================= */
 
 @media (max-width: 900px) {
-  .optimiser {
+  .ser {
     flex-direction: column;
   }
 
-  .optimiser-image img {
+  .ser-image img {
     width: 100%;
     height: auto;
   }
@@ -133,10 +133,10 @@ hr {
 <h1>La forge des experts</h1>
 
 <!-- ===================== -->
-<!-- OPTIMISER -->
+<!-- SER -->
 <!-- ===================== -->
 
-<h2>Optimiser une grille</h2>
+<h2>Optimiser une grille <span class="sub-link">[ou <a href="p1.py.txt" download>version python</a>]</span></h2>
 
 <div class="optimiser">
 
