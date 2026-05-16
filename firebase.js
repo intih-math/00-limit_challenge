@@ -83,6 +83,9 @@ async function submitScore(newGameData) {
         return false;
     }
 }
+// Rendre la fonction accessible à game.js
+window.submitScore = submitScore;
+
 //window.submitScore = async function (docData) {
 //  try {
 //    await addDoc(collection(db, "scores"), docData);
