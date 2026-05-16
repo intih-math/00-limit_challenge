@@ -115,6 +115,7 @@ function createRow(n, record, className, label, isMatch, bestPath, bestCycle) {
   
   if (record) {
     nameDisplay = record.name;
+    console.log(`[Taille ${n} - Date ${timestamp}] Données du record :`, record);
     
     // 2. Formatage de la date compacte (JJ/MM/AA)
     if (record.timestamp) {
