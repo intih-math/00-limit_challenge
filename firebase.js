@@ -70,16 +70,7 @@ async function submitScore(newGameData) {
             console.log(breakingNews);
 
             // Sauvegarde dans Firestore
-            await addDoc(collection(db, "scores"), {
-                name: newGameData.name,
-                n: newGameData.n,
-                type: newGameData.type,
-                diffRC: newGameData.diffRC,
-                diffDiag: newGameData.diffDiag,
-                balance: newGameData.balance,
-                input: newGameData.input,
-                timestamp: Date.now() // Utile pour savoir quand le record a été établi
-            });
+            await addDoc(collection(db, "scores"), newGameData);
 
             return true;
         } else {
