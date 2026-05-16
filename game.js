@@ -496,20 +496,28 @@ window.submit = async function () {
     timestamp: Date.now()
   };
 
-  // 7. Envoi à Firebase et mise à jour
+// 7. Envoi à Firebase et mise à jour conditionnelle
   try {
-    // Appelle la fonction de soumission définie dans firebase.js
-    await window.submitScore(recordData);
+    // On récupère le résultat de la validation (true si record battu, false sinon)
+    const isNewRecord = await submitScore(recordData);
     
-    // Mise à jour de l'affichage des scores sur la page
-    document.getElementById("diffRC").innerText = scores.diffRC;
-    document.getElementById("diffDiag").innerText = scores.diffDiag;
-    document.getElementById("balance").innerText = scores.balance;
+    if (isNewRecord) {
+      // 1. On met à jour l'affichage des scores sur la page uniquement s'il y a amélioration
+      document.getElementById("diffRC").innerText = scores.diffRC;
+      document.getElementById("diffDiag").innerText = scores.diffDiag;
+      document.getElementById("balance").innerText = scores.balance;
 
-    // Recharger le classement si la fonction existe
-    if (window.loadLeaderboard) {
-      window.loadLeaderboard();
+      alert("🎉 Félicitations ! Nouveau record enregistré et classement mis à jour.");
+
+      // 2. Recharger le classement pour afficher le nouveau record en direct
+      if (window.loadLeaderboard) {
+        window.loadLeaderboard();
+      }
+    } else {
+      // Le score est valide techniquement, mais n'améliore rien
+      alert("Grille valide ! Cependant, elle ne bat aucun record actuel pour cette taille.");
     }
+
   } catch (error) {
     console.error("Erreur lors de l'envoi :", error);
     alert("Erreur lors de l'enregistrement du record.");
