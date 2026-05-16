@@ -124,18 +124,19 @@ table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
 th { border-bottom: 1px solid #444; padding: 5px; }
 td { padding: 4px; text-align: center; }
 
-/* Force l'alignement et la répartition des 3 colonnes */
+/* Alignement global pour les 4 colonnes */
 #table-rc th, #table-rc td,
 #table-diag th, #table-diag td,
 #table-balance th, #table-balance td {
-  padding: 8px 12px;
-  text-align: left; /* Aligne le texte proprement à gauche */
+  padding: 8px 10px;
+  text-align: left;
 }
 
-/* Optionnel : Donne des largeurs fixes aux colonnes pour un rendu parfait */
-#table-rc th:nth-child(1) { width: 25%; } /* Colonne Taille (P 5, C 5...) */
-#table-rc th:nth-child(2) { width: 30%; } /* Colonne Score (avec le !) */
-#table-rc th:nth-child(3) { width: 45%; } /* Colonne Pseudo */
+/* Répartition idéale de la largeur des 4 colonnes */
+#table-rc th:nth-child(1), #table-diag th:nth-child(1), #table-balance th:nth-child(1) { width: 20%; } /* Taille */
+#table-rc th:nth-child(2), #table-diag th:nth-child(2), #table-balance th:nth-child(2) { width: 25%; } /* Score */
+#table-rc th:nth-child(3), #table-diag th:nth-child(3), #table-balance th:nth-child(3) { width: 35%; } /* Pseudo */
+#table-rc th:nth-child(4), #table-diag th:nth-child(4), #table-balance th:nth-child(4) { width: 20%; } /* Date */
 
 /* Couleurs des lignes */
 .row-path { background-color: rgba(255, 255, 255, 0.05); } /* Non-cycle */
